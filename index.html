@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Ritmo — Daily Habit Tracker</title>
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <main class="app">
+
+    <header class="header">
+
+      <div>
+        <p class="eyebrow">YOUR DAILY RHYTHM</p>
+
+        <h1>Ritmo</h1>
+
+        <p class="subtitle">
+          Small habits. Better days.
+        </p>
+      </div>
+
+      <div class="progress-circle">
+        <span id="progressPercent">0%</span>
+      </div>
+
+    </header>
+
+
+    <section class="stats">
+
+      <div class="stat-card">
+        <span>🔥</span>
+
+        <div>
+          <strong id="bestStreak">0</strong>
+          <small>Best Streak</small>
+        </div>
+      </div>
+
+
+      <div class="stat-card">
+        <span>✓</span>
+
+        <div>
+          <strong id="completedCount">0</strong>
+          <small>Done Today</small>
+        </div>
+      </div>
+
+
+      <div class="stat-card">
+        <span>🌱</span>
+
+        <div>
+          <strong id="totalHabits">0</strong>
+          <small>Total Habits</small>
+        </div>
+      </div>
+
+    </section>
+
+
+    <section class="add-section">
+
+      <input
+        id="habitInput"
+        type="text"
+        placeholder="Add a habit..."
+        maxlength="50"
+      >
+
+      <button id="addHabitBtn">
+        Add Habit
+      </button>
+
+    </section>
+
+
+    <section class="habits-section">
+
+      <div class="section-heading">
+
+        <div>
+          <p class="section-label">TODAY</p>
+          <h2>Your Habits</h2>
+        </div>
+
+        <span id="date"></span>
+
+      </div>
+
+
+      <div id="habitList" class="habit-list"></div>
+
+
+      <div id="emptyState" class="empty-state">
+
+        <div class="empty-icon">🌿</div>
+
+        <h3>Your rhythm starts here</h3>
+
+        <p>
+          Add your first habit and start building consistency.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <footer>
+      <p>Ritmo • Build your rhythm.</p>
+    </footer>
+
+  </main>
+
+
+  <script src="script.js"></script>
+
+</body>
+</html>
