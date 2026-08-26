@@ -1,11 +1,24 @@
+/* =====================================================
+   RITMO V3
+   Permanent date-based habit tracking
+===================================================== */
+
+const STORAGE_KEY = "ritmo-v3";
+const LEGACY_HABITS_KEY = "ritmo-habits";
+
+
+/* =====================================================
+   ELEMENTS
+===================================================== */
+
 const habitInput =
   document.getElementById("habitInput");
 
 const addHabitBtn =
   document.getElementById("addHabitBtn");
 
-const habitList =
-  document.getElementById("habitList");
+const habitMatrix =
+  document.getElementById("habitMatrix");
 
 const emptyState =
   document.getElementById("emptyState");
@@ -22,85 +35,829 @@ const totalHabits =
 const bestStreak =
   document.getElementById("bestStreak");
 
-const dateElement =
-  document.getElementById("date");
+const weekLabel =
+  document.getElementById("weekLabel");
+
+const todayLabel =
+  document.getElementById("todayLabel");
+
+const previousWeekBtn =
+  document.getElementById("previousWeekBtn");
+
+const nextWeekBtn =
+  document.getElementById("nextWeekBtn");
+
+const currentWeekBtn =
+  document.getElementById("currentWeekBtn");
 
 
-/* ================================
-   LOAD SAVED HABITS
-================================ */
+/* =====================================================
+   CONSTANTS
+===================================================== */
 
-let habits =
-  JSON.parse(
-    localStorage.getItem("ritmo-habits")
-  ) || [];
+const DAY_NAMES = [
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat"
+];
 
 
-/* ================================
+/*
+  viewedWeekStart always represents Sunday
+  of the currently displayed week.
+*/
+
+let viewedWeekStart =
+  startOfWeek(new Date());
+
+
+/*
+  Main permanent application data.
+*/
+
+let data =
+  loadData();
+
+
+/* =====================================================
    DATE HELPERS
-================================ */
+===================================================== */
 
-function getDateKey(date = new Date()) {
+function pad(value) {
 
-  const year =
-    date.getFullYear();
-
-  const month =
-    String(date.getMonth() + 1).padStart(2, "0");
-
-  const day =
-    String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
+  return String(value)
+    .padStart(2, "0");
 
 }
 
 
-function getYesterdayKey() {
+function getDateKey(
+  date = new Date()
+) {
 
-  const yesterday =
-    new Date();
-
-  yesterday.setDate(
-    yesterday.getDate() - 1
+  return (
+    `${date.getFullYear()}-` +
+    `${pad(date.getMonth() + 1)}-` +
+    `${pad(date.getDate())}`
   );
 
-  return getDateKey(yesterday);
+}
+
+
+function parseDateKey(key) {
+
+  const [
+    year,
+    month,
+    day
+  ] =
+    key
+      .split("-")
+      .map(Number);
+
+  return new Date(
+    year,
+    month - 1,
+    day
+  );
 
 }
 
 
-/* ================================
-   TODAY'S DATE
-================================ */
+function startOfWeek(date) {
 
-const today = new Date();
-
-dateElement.textContent =
-  today.toLocaleDateString("en-IN", {
-    weekday: "short",
-    day: "numeric",
-    month: "short"
-  });
+  const result =
+    new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate()
+    );
 
 
-/* ================================
-   SAVE HABITS
-================================ */
+  /*
+    JavaScript:
+    Sunday = 0
+    Monday = 1
+    ...
+    Saturday = 6
+  */
 
-function saveHabits() {
+  result.setDate(
+    result.getDate() -
+    result.getDay()
+  );
+
+
+  return result;
+
+}
+
+
+function addDays(
+  date,
+  amount
+) {
+
+  const result =
+    new Date(date);
+
+  result.setDate(
+    result.getDate() +
+    amount
+  );
+
+  return result;
+
+}
+
+
+function isSameDate(
+  first,
+  second
+) {
+
+  return (
+    getDateKey(first) ===
+    getDateKey(second)
+  );
+
+}
+
+
+function formatShortDate(date) {
+
+  return date.toLocaleDateString(
+    "en-IN",
+    {
+      day: "numeric",
+      month: "short"
+    }
+  );
+
+}
+
+
+function formatWeekRange(start) {
+
+  const end =
+    addDays(start, 6);
+
+
+  const sameYear =
+    start.getFullYear() ===
+    end.getFullYear();
+
+
+  const startText =
+    start.toLocaleDateString(
+      "en-IN",
+      {
+        day: "numeric",
+        month: "short",
+
+        ...(sameYear
+          ? {}
+          : {
+              year: "numeric"
+            })
+      }
+    );
+
+
+  const endText =
+    end.toLocaleDateString(
+      "en-IN",
+      {
+        day: "numeric",
+        month: "short",
+        year: "numeric"
+      }
+    );
+
+
+  return (
+    `${startText} – ${endText}`
+  );
+
+}
+
+
+/* =====================================================
+   DATA STRUCTURE
+===================================================== */
+
+/*
+  V3 DOES NOT store:
+
+    completed: true/false
+    streak: number
+    lastCompletedDate
+
+  Those values are derived from permanent history.
+
+  Instead we store:
+
+    completions: {
+      "2026-08-24": true,
+      "2026-08-25": true,
+      "2026-08-26": true
+    }
+
+  This allows Ritmo to keep months and years
+  of history.
+*/
+
+
+function makeEmptyData() {
+
+  return {
+
+    version: 3,
+
+    habits: [],
+
+    stats: {
+
+      /*
+        This number is deliberately independent
+        from individual habits.
+
+        Therefore deleting a habit cannot
+        delete an earned Best Streak.
+      */
+
+      bestStreak: 0
+
+    }
+
+  };
+
+}
+
+
+/* =====================================================
+   NORMALIZE SAVED DATA
+===================================================== */
+
+function normalizeData(raw) {
+
+  const clean =
+    makeEmptyData();
+
+
+  if (
+    !raw ||
+    typeof raw !== "object"
+  ) {
+
+    return clean;
+
+  }
+
+
+  const habits =
+    Array.isArray(raw.habits)
+      ? raw.habits
+      : [];
+
+
+  clean.habits =
+    habits
+
+      .filter(
+        habit =>
+          habit &&
+          typeof habit === "object" &&
+          habit.name
+      )
+
+      .map(habit => {
+
+        const completions =
+          habit.completions &&
+          typeof habit.completions === "object"
+            ? Object.fromEntries(
+
+                Object.entries(
+                  habit.completions
+                )
+
+                .filter(
+                  ([key, value]) =>
+                    /^\d{4}-\d{2}-\d{2}$/.test(
+                      key
+                    ) &&
+                    value === true
+                )
+
+              )
+
+            : {};
+
+
+        return {
+
+          id:
+            String(
+              habit.id ??
+              `${Date.now()}-${Math.random()}`
+            ),
+
+          name:
+            String(habit.name)
+              .trim()
+              .slice(0, 50),
+
+          createdAt:
+            habit.createdAt ||
+            new Date().toISOString(),
+
+          completions
+
+        };
+
+      })
+
+      .filter(
+        habit => habit.name
+      );
+
+
+  clean.stats.bestStreak =
+    Number.isFinite(
+      Number(
+        raw.stats?.bestStreak
+      )
+    )
+
+      ? Math.max(
+          0,
+          Number(
+            raw.stats.bestStreak
+          )
+        )
+
+      : 0;
+
+
+  return clean;
+
+}
+
+
+/* =====================================================
+   LEGACY DATA MIGRATION
+===================================================== */
+
+/*
+  Your previous Ritmo version stored:
+
+    completed
+    streak
+    bestStreak
+    lastCompletedDate
+
+  We don't want existing data to simply disappear.
+
+  So V3 attempts to migrate the old format.
+*/
+
+
+function migrateLegacyData() {
+
+  try {
+
+    const legacyRaw =
+      localStorage.getItem(
+        LEGACY_HABITS_KEY
+      );
+
+
+    if (!legacyRaw) {
+
+      return makeEmptyData();
+
+    }
+
+
+    const legacyHabits =
+      JSON.parse(legacyRaw);
+
+
+    if (
+      !Array.isArray(
+        legacyHabits
+      )
+    ) {
+
+      return makeEmptyData();
+
+    }
+
+
+    const migrated =
+      makeEmptyData();
+
+
+    migrated.habits =
+      legacyHabits
+
+        .filter(
+          habit =>
+            habit &&
+            habit.name
+        )
+
+        .map(
+          (
+            habit,
+            index
+          ) => {
+
+            const completions = {};
+
+
+            /*
+              We can safely preserve a completion
+              when the old app tells us the exact
+              last completed date.
+            */
+
+            if (
+              habit.completed &&
+              habit.lastCompletedDate
+            ) {
+
+              completions[
+                habit.lastCompletedDate
+              ] = true;
+
+            }
+
+
+            return {
+
+              id:
+                String(
+                  habit.id ??
+                  `${Date.now()}-${index}`
+                ),
+
+              name:
+                String(
+                  habit.name
+                )
+                .trim()
+                .slice(0, 50),
+
+              createdAt:
+                new Date().toISOString(),
+
+              completions
+
+            };
+
+          }
+        );
+
+
+    /*
+      Preserve the old highest streak.
+
+      This is especially important because
+      V3 treats Best Streak as permanent.
+    */
+
+    const legacyBest =
+      legacyHabits.reduce(
+
+        (
+          highest,
+          habit
+        ) => {
+
+          return Math.max(
+            highest,
+            Number(
+              habit?.bestStreak
+            ) || 0,
+            Number(
+              habit?.streak
+            ) || 0
+          );
+
+        },
+
+        0
+
+      );
+
+
+    migrated.stats.bestStreak =
+      legacyBest;
+
+
+    if (
+      migrated.habits.length
+    ) {
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(
+          migrated
+        )
+      );
+
+    }
+
+
+    return migrated;
+
+  } catch {
+
+    return makeEmptyData();
+
+  }
+
+}
+
+
+/* =====================================================
+   LOAD DATA
+===================================================== */
+
+function loadData() {
+
+  try {
+
+    const saved =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+
+    if (saved) {
+
+      return normalizeData(
+        JSON.parse(saved)
+      );
+
+    }
+
+  } catch {
+
+    /*
+      If saved data is corrupted,
+      try the older format instead.
+    */
+
+  }
+
+
+  return migrateLegacyData();
+
+}
+
+
+/* =====================================================
+   SAVE DATA
+===================================================== */
+
+function saveData() {
 
   localStorage.setItem(
-    "ritmo-habits",
-    JSON.stringify(habits)
+    STORAGE_KEY,
+    JSON.stringify(data)
   );
 
 }
 
 
-/* ================================
+/* =====================================================
+   WEEK DATA
+===================================================== */
+
+function getWeekDates() {
+
+  return Array.from(
+    {
+      length: 7
+    },
+
+    (_, index) =>
+      addDays(
+        viewedWeekStart,
+        index
+      )
+
+  );
+
+}
+
+
+/* =====================================================
+   FUTURE DATE CHECK
+===================================================== */
+
+function isFutureDate(date) {
+
+  const today =
+    new Date();
+
+
+  today.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  const target =
+    new Date(date);
+
+
+  target.setHours(
+    0,
+    0,
+    0,
+    0
+  );
+
+
+  return target > today;
+
+}
+
+
+/* =====================================================
+   CURRENT STREAK
+===================================================== */
+
+function calculateCurrentStreak(
+  habit
+) {
+
+  const today =
+    new Date();
+
+
+  const todayKey =
+    getDateKey(today);
+
+
+  /*
+    A current streak exists only if today
+    itself is completed.
+  */
+
+  if (
+    !habit.completions[
+      todayKey
+    ]
+  ) {
+
+    return 0;
+
+  }
+
+
+  let streak = 0;
+
+  let cursor =
+    today;
+
+
+  while (
+    habit.completions[
+      getDateKey(cursor)
+    ]
+  ) {
+
+    streak += 1;
+
+    cursor =
+      addDays(
+        cursor,
+        -1
+      );
+
+  }
+
+
+  return streak;
+
+}
+
+
+/* =====================================================
+   BEST STREAK FOR ONE HABIT
+===================================================== */
+
+function calculateBestStreak(
+  habit
+) {
+
+  const dates =
+    Object.keys(
+      habit.completions
+    )
+
+    .filter(
+      key =>
+        habit.completions[key]
+    )
+
+    .sort();
+
+
+  let best = 0;
+
+  let current = 0;
+
+  let previous = null;
+
+
+  for (
+    const key of dates
+  ) {
+
+    if (previous) {
+
+      const difference =
+        Math.round(
+
+          (
+            parseDateKey(key) -
+            parseDateKey(previous)
+          ) / 86400000
+
+        );
+
+
+      current =
+        difference === 1
+          ? current + 1
+          : 1;
+
+    } else {
+
+      current = 1;
+
+    }
+
+
+    best =
+      Math.max(
+        best,
+        current
+      );
+
+
+    previous = key;
+
+  }
+
+
+  return best;
+
+}
+
+
+/* =====================================================
+   PERMANENT BEST STREAK
+===================================================== */
+
+function updatePermanentBestStreak() {
+
+  for (
+    const habit of data.habits
+  ) {
+
+    const habitBest =
+      calculateBestStreak(
+        habit
+      );
+
+
+    data.stats.bestStreak =
+      Math.max(
+        data.stats.bestStreak,
+        habitBest
+      );
+
+  }
+
+}
+
+
+/* =====================================================
    ADD HABIT
-================================ */
+===================================================== */
 
 function addHabit() {
 
@@ -117,402 +874,627 @@ function addHabit() {
   }
 
 
+  /*
+    Prevent accidental duplicate habits.
+  */
+
+  const duplicate =
+    data.habits.some(
+
+      habit =>
+        habit.name.toLowerCase() ===
+        name.toLowerCase()
+
+    );
+
+
+  if (duplicate) {
+
+    habitInput.focus();
+
+    habitInput.select();
+
+    return;
+
+  }
+
+
   const newHabit = {
 
-    id: Date.now(),
+    id:
+      `${Date.now()}-${Math.random()
+        .toString(36)
+        .slice(2, 8)}`,
 
-    name: name,
+    name,
 
-    completed: false,
+    createdAt:
+      new Date().toISOString(),
 
-    streak: 0,
-
-    bestStreak: 0,
-
-    lastCompletedDate: null
+    completions: {}
 
   };
 
 
-  habits.push(newHabit);
+  data.habits.push(
+    newHabit
+  );
 
 
   habitInput.value = "";
 
 
-  saveHabits();
+  saveData();
 
-  renderHabits();
+  render();
 
 }
 
 
-/* ================================
-   COMPLETE / UNCOMPLETE HABIT
-================================ */
+/* =====================================================
+   TOGGLE COMPLETION
+===================================================== */
 
-function toggleHabit(id) {
+function toggleCompletion(
+  habitId,
+  dateKey
+) {
 
-  const todayKey =
-    getDateKey();
-
-  const yesterdayKey =
-    getYesterdayKey();
-
-
-  habits =
-    habits.map(habit => {
-
-      if (habit.id !== id) {
-
-        return habit;
-
-      }
+  const habit =
+    data.habits.find(
+      item =>
+        item.id === habitId
+    );
 
 
-      /* UNCHECK HABIT */
+  if (!habit) {
 
-      if (habit.completed) {
+    return;
 
-        habit.completed = false;
+  }
 
-        /*
-          Removing today's completion
-          restores the previous streak.
-        */
 
-        if (
-          habit.lastCompletedDate ===
-          todayKey
-        ) {
+  const targetDate =
+    parseDateKey(dateKey);
 
-          if (
-            habit.streak > 0
-          ) {
 
-            habit.streak--;
+  /*
+    Future days cannot be checked.
+
+    This prevents accidental "prediction"
+    of future completions.
+  */
+
+  if (
+    isFutureDate(
+      targetDate
+    )
+  ) {
+
+    return;
+
+  }
+
+
+  /*
+    If already completed,
+    remove that specific date.
+
+    If not completed,
+    save that specific date.
+  */
+
+  if (
+    habit.completions[
+      dateKey
+    ]
+  ) {
+
+    delete habit.completions[
+      dateKey
+    ];
+
+  } else {
+
+    habit.completions[
+      dateKey
+    ] = true;
+
+
+    /*
+      Check whether this completion
+      created a new all-time record.
+
+      Once earned, this record stays.
+    */
+
+    data.stats.bestStreak =
+      Math.max(
+        data.stats.bestStreak,
+        calculateBestStreak(
+          habit
+        )
+      );
+
+  }
+
+
+  saveData();
+
+  render();
+
+}
+
+
+/* =====================================================
+   DELETE HABIT
+===================================================== */
+
+function deleteHabit(
+  habitId
+) {
+
+  const habit =
+    data.habits.find(
+      item =>
+        item.id === habitId
+    );
+
+
+  if (!habit) {
+
+    return;
+
+  }
+
+
+  const confirmed =
+    window.confirm(
+
+      `Delete “${habit.name}”? ` +
+      `Its earned Best Streak will be kept.`
+
+    );
+
+
+  if (!confirmed) {
+
+    return;
+
+  }
+
+
+  /*
+    IMPORTANT:
+
+    We remove only the habit.
+
+    We DO NOT touch:
+
+      data.stats.bestStreak
+
+    Therefore Best Streak survives deletion.
+  */
+
+  data.habits =
+    data.habits.filter(
+      item =>
+        item.id !== habitId
+    );
+
+
+  saveData();
+
+  render();
+
+}
+
+
+/* =====================================================
+   WEEK HEADER
+===================================================== */
+
+function renderWeekHeader() {
+
+  const dates =
+    getWeekDates();
+
+
+  const today =
+    new Date();
+
+
+  weekLabel.textContent =
+    formatWeekRange(
+      viewedWeekStart
+    );
+
+
+  todayLabel.textContent =
+    `Today · ${formatShortDate(today)}`;
+
+
+  currentWeekBtn.disabled =
+    isSameDate(
+      viewedWeekStart,
+      startOfWeek(today)
+    );
+
+
+  return dates;
+
+}
+
+
+/* =====================================================
+   ELEMENT CREATOR
+===================================================== */
+
+function createElement(
+  tag,
+  className,
+  text
+) {
+
+  const element =
+    document.createElement(tag);
+
+
+  if (className) {
+
+    element.className =
+      className;
+
+  }
+
+
+  if (
+    text !== undefined
+  ) {
+
+    element.textContent =
+      text;
+
+  }
+
+
+  return element;
+
+}
+
+
+/* =====================================================
+   RENDER MATRIX
+===================================================== */
+
+function renderMatrix(
+  dates
+) {
+
+  habitMatrix.innerHTML = "";
+
+
+  /*
+    EMPTY STATE
+  */
+
+  if (
+    !data.habits.length
+  ) {
+
+    emptyState.hidden =
+      false;
+
+    return;
+
+  }
+
+
+  emptyState.hidden =
+    true;
+
+
+  /*
+    HEADER ROW
+  */
+
+  const header =
+    createElement(
+      "div",
+      "matrix-row matrix-header"
+    );
+
+
+  const habitHeader =
+    createElement(
+      "div",
+      "habit-column matrix-heading",
+      "Habit"
+    );
+
+
+  header.appendChild(
+    habitHeader
+  );
+
+
+  dates.forEach(
+    (
+      date,
+      index
+    ) => {
+
+      const day =
+        createElement(
+
+          "div",
+
+          `day-column ${
+            isSameDate(
+              date,
+              new Date()
+            )
+              ? "is-today"
+              : ""
+          }`
+
+        );
+
+
+      day.appendChild(
+
+        createElement(
+          "span",
+          "day-name",
+          DAY_NAMES[index]
+        )
+
+      );
+
+
+      day.appendChild(
+
+        createElement(
+          "span",
+          "day-date",
+          String(
+            date.getDate()
+          )
+        )
+
+      );
+
+
+      header.appendChild(
+        day
+      );
+
+    }
+  );
+
+
+  habitMatrix.appendChild(
+    header
+  );
+
+
+  /*
+    HABIT ROWS
+  */
+
+  data.habits.forEach(
+    habit => {
+
+      const row =
+        createElement(
+          "div",
+          "matrix-row habit-row"
+        );
+
+
+      /*
+        HABIT NAME COLUMN
+      */
+
+      const habitColumn =
+        createElement(
+          "div",
+          "habit-column"
+        );
+
+
+      const info =
+        createElement(
+          "div",
+          "habit-info"
+        );
+
+
+      info.appendChild(
+
+        createElement(
+          "span",
+          "habit-name",
+          habit.name
+        )
+
+      );
+
+
+      const currentStreak =
+        calculateCurrentStreak(
+          habit
+        );
+
+
+      const streakText =
+        currentStreak > 0
+
+          ? `${currentStreak} day streak`
+
+          : "No active streak";
+
+
+      info.appendChild(
+
+        createElement(
+          "span",
+          "habit-streak",
+          streakText
+        )
+
+      );
+
+
+      /*
+        DELETE BUTTON
+      */
+
+      const deleteButton =
+        createElement(
+          "button",
+          "delete-button",
+          "Delete"
+        );
+
+
+      deleteButton.type =
+        "button";
+
+
+      deleteButton.setAttribute(
+        "aria-label",
+        `Delete ${habit.name}`
+      );
+
+
+      deleteButton.addEventListener(
+        "click",
+        () =>
+          deleteHabit(
+            habit.id
+          )
+      );
+
+
+      habitColumn.append(
+        info,
+        deleteButton
+      );
+
+
+      row.appendChild(
+        habitColumn
+      );
+
+
+      /*
+        SEVEN DAILY CELLS
+      */
+
+      dates.forEach(
+        date => {
+
+          const key =
+            getDateKey(
+              date
+            );
+
+
+          const completed =
+            habit.completions[
+              key
+            ] === true;
+
+
+          const future =
+            isFutureDate(
+              date
+            );
+
+
+          const button =
+            createElement(
+
+              "button",
+
+              `day-cell ${
+                completed
+                  ? "is-complete"
+                  : ""
+              } ${
+                future
+                  ? "is-future"
+                  : ""
+              }`
+
+            );
+
+
+          button.type =
+            "button";
+
+
+          button.disabled =
+            future;
+
+
+          button.setAttribute(
+
+            "aria-label",
+
+            `${habit.name}, ` +
+            `${DAY_NAMES[date.getDay()]} ` +
+            `${formatShortDate(date)}: ` +
+            `${
+              completed
+                ? "completed"
+                : "not completed"
+            }`
+
+          );
+
+
+          if (completed) {
+
+            button.innerHTML =
+              `<span aria-hidden="true">✓</span>`;
 
           }
 
 
-          habit.lastCompletedDate =
-            null;
+          button.addEventListener(
+            "click",
+            () =>
+              toggleCompletion(
+                habit.id,
+                key
+              )
+          );
+
+
+          row.appendChild(
+            button
+          );
 
         }
-
-        return habit;
-
-      }
+      );
 
 
-      /* CHECK HABIT */
+      habitMatrix.appendChild(
+        row
+      );
 
-      habit.completed = true;
-
-
-      /*
-        If this habit was completed
-        yesterday, continue the streak.
-      */
-
-      if (
-        habit.lastCompletedDate ===
-        yesterdayKey
-      ) {
-
-        habit.streak++;
-
-      }
-
-      /*
-        If it was not completed yesterday,
-        start a new streak.
-      */
-
-      else {
-
-        habit.streak = 1;
-
-      }
-
-
-      /*
-        Update the best streak only
-        when the current streak is higher.
-      */
-
-      if (
-        habit.streak >
-        (habit.bestStreak || 0)
-      ) {
-
-        habit.bestStreak =
-          habit.streak;
-
-      }
-
-
-      habit.lastCompletedDate =
-        todayKey;
-
-
-      return habit;
-
-    });
-
-
-  saveHabits();
-
-  renderHabits();
+    }
+  );
 
 }
 
 
-/* ================================
-   DELETE HABIT
-================================ */
-
-function deleteHabit(id) {
-
-  habits =
-    habits.filter(
-      habit => habit.id !== id
-    );
-
-
-  saveHabits();
-
-  renderHabits();
-
-}
-
-
-/* ================================
-   RESET OLD COMPLETION
-================================ */
-
-function updateDailyStatus() {
-
-  const todayKey =
-    getDateKey();
-
-
-  habits =
-    habits.map(habit => {
-
-      /*
-        If the habit was completed
-        on a previous day, it should
-        appear unchecked today.
-      */
-
-      if (
-        habit.completed &&
-        habit.lastCompletedDate !==
-        todayKey
-      ) {
-
-        habit.completed = false;
-
-      }
-
-
-      return habit;
-
-    });
-
-
-  saveHabits();
-
-}
-
-
-/* ================================
-   DISPLAY HABITS
-================================ */
-
-function renderHabits() {
-
-  habitList.innerHTML = "";
-
-
-  if (habits.length === 0) {
-
-    emptyState.style.display =
-      "block";
-
-  } else {
-
-    emptyState.style.display =
-      "none";
-
-  }
-
-
-  habits.forEach(habit => {
-
-    const habitElement =
-      document.createElement("div");
-
-
-    habitElement.className =
-      `habit ${
-        habit.completed
-          ? "completed"
-          : ""
-      }`;
-
-
-    habitElement.innerHTML = `
-
-      <button
-        class="check-button"
-        onclick="toggleHabit(${habit.id})"
-        aria-label="Complete habit">
-      </button>
-
-
-      <div class="habit-info">
-
-        <div class="habit-name">
-          ${escapeHTML(habit.name)}
-        </div>
-
-        <div class="streak">
-          🔥 ${habit.streak} day streak
-        </div>
-
-      </div>
-
-
-      <button
-        class="delete-button"
-        onclick="deleteHabit(${habit.id})"
-        aria-label="Delete habit">
-
-        ×
-
-      </button>
-
-    `;
-
-
-    habitList.appendChild(
-      habitElement
-    );
-
-  });
-
-
-  updateStats();
-
-}
-
-
-/* ================================
-   UPDATE STATISTICS
-================================ */
+/* =====================================================
+   UPDATE STATS
+===================================================== */
 
 function updateStats() {
 
-  const total =
-    habits.length;
-
-
-  const completed =
-    habits.filter(
-      habit => habit.completed
-    ).length;
-
-
-  const percentage =
-    total === 0
-      ? 0
-      : Math.round(
-          (completed / total) * 100
-        );
-
-
-  const highestBestStreak =
-    habits.length === 0
-      ? 0
-      : Math.max(
-          ...habits.map(
-            habit =>
-              habit.bestStreak ||
-              habit.streak ||
-              0
-          )
-        );
-
-
-  totalHabits.textContent =
-    total;
-
-
-  completedCount.textContent =
-    completed;
-
-
-  progressPercent.textContent =
-    `${percentage}%`;
-
-
-  bestStreak.textContent =
-    highestBestStreak;
-
-}
-
-
-/* ================================
-   PROTECT USER INPUT
-================================ */
-
-function escapeHTML(text) {
-
-  const div =
-    document.createElement("div");
-
-  div.textContent =
-    text;
-
-  return div.innerHTML;
-
-}
-
-
-/* ================================
-   ADD BUTTON
-================================ */
-
-addHabitBtn.addEventListener(
-  "click",
-  addHabit
-);
-
-
-/* ================================
-   ENTER KEY
-================================ */
-
-habitInput.addEventListener(
-  "keydown",
-  event => {
-
-    if (event.key === "Enter") {
-
-      addHabit();
-
-    }
-
-  }
-);
-
-
-/* ================================
-   START APP
-================================ */
-
-updateDailyStatus();
-
-renderHabits();
+  con
