@@ -26,7 +26,9 @@ const dateElement =
   document.getElementById("date");
 
 
-/* LOAD SAVED HABITS */
+/* ================================
+   LOAD SAVED HABITS
+================================ */
 
 let habits =
   JSON.parse(
@@ -34,7 +36,43 @@ let habits =
   ) || [];
 
 
-/* TODAY'S DATE */
+/* ================================
+   DATE HELPERS
+================================ */
+
+function getDateKey(date = new Date()) {
+
+  const year =
+    date.getFullYear();
+
+  const month =
+    String(date.getMonth() + 1).padStart(2, "0");
+
+  const day =
+    String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+
+}
+
+
+function getYesterdayKey() {
+
+  const yesterday =
+    new Date();
+
+  yesterday.setDate(
+    yesterday.getDate() - 1
+  );
+
+  return getDateKey(yesterday);
+
+}
+
+
+/* ================================
+   TODAY'S DATE
+================================ */
 
 const today = new Date();
 
@@ -46,7 +84,9 @@ dateElement.textContent =
   });
 
 
-/* SAVE */
+/* ================================
+   SAVE HABITS
+================================ */
 
 function saveHabits() {
 
@@ -58,7 +98,9 @@ function saveHabits() {
 }
 
 
-/* ADD HABIT */
+/* ================================
+   ADD HABIT
+================================ */
 
 function addHabit() {
 
@@ -83,7 +125,11 @@ function addHabit() {
 
     completed: false,
 
-    streak: 0
+    streak: 0,
+
+    bestStreak: 0,
+
+    lastCompletedDate: null
 
   };
 
@@ -101,34 +147,114 @@ function addHabit() {
 }
 
 
-/* COMPLETE HABIT */
+/* ================================
+   COMPLETE / UNCOMPLETE HABIT
+================================ */
 
 function toggleHabit(id) {
+
+  const todayKey =
+    getDateKey();
+
+  const yesterdayKey =
+    getYesterdayKey();
+
 
   habits =
     habits.map(habit => {
 
-      if (habit.id === id) {
+      if (habit.id !== id) {
 
-        if (!habit.completed) {
+        return habit;
 
-          habit.completed = true;
+      }
 
-          habit.streak++;
 
-        } else {
+      /* UNCHECK HABIT */
 
-          habit.completed = false;
+      if (habit.completed) {
 
-          if (habit.streak > 0) {
+        habit.completed = false;
+
+        /*
+          Removing today's completion
+          restores the previous streak.
+        */
+
+        if (
+          habit.lastCompletedDate ===
+          todayKey
+        ) {
+
+          if (
+            habit.streak > 0
+          ) {
 
             habit.streak--;
 
           }
 
+
+          habit.lastCompletedDate =
+            null;
+
         }
 
+        return habit;
+
       }
+
+
+      /* CHECK HABIT */
+
+      habit.completed = true;
+
+
+      /*
+        If this habit was completed
+        yesterday, continue the streak.
+      */
+
+      if (
+        habit.lastCompletedDate ===
+        yesterdayKey
+      ) {
+
+        habit.streak++;
+
+      }
+
+      /*
+        If it was not completed yesterday,
+        start a new streak.
+      */
+
+      else {
+
+        habit.streak = 1;
+
+      }
+
+
+      /*
+        Update the best streak only
+        when the current streak is higher.
+      */
+
+      if (
+        habit.streak >
+        (habit.bestStreak || 0)
+      ) {
+
+        habit.bestStreak =
+          habit.streak;
+
+      }
+
+
+      habit.lastCompletedDate =
+        todayKey;
+
 
       return habit;
 
@@ -142,7 +268,9 @@ function toggleHabit(id) {
 }
 
 
-/* DELETE HABIT */
+/* ================================
+   DELETE HABIT
+================================ */
 
 function deleteHabit(id) {
 
@@ -159,7 +287,49 @@ function deleteHabit(id) {
 }
 
 
-/* DISPLAY HABITS */
+/* ================================
+   RESET OLD COMPLETION
+================================ */
+
+function updateDailyStatus() {
+
+  const todayKey =
+    getDateKey();
+
+
+  habits =
+    habits.map(habit => {
+
+      /*
+        If the habit was completed
+        on a previous day, it should
+        appear unchecked today.
+      */
+
+      if (
+        habit.completed &&
+        habit.lastCompletedDate !==
+        todayKey
+      ) {
+
+        habit.completed = false;
+
+      }
+
+
+      return habit;
+
+    });
+
+
+  saveHabits();
+
+}
+
+
+/* ================================
+   DISPLAY HABITS
+================================ */
 
 function renderHabits() {
 
@@ -239,7 +409,9 @@ function renderHabits() {
 }
 
 
-/* UPDATE STATISTICS */
+/* ================================
+   UPDATE STATISTICS
+================================ */
 
 function updateStats() {
 
@@ -261,12 +433,15 @@ function updateStats() {
         );
 
 
-  const highestStreak =
+  const highestBestStreak =
     habits.length === 0
       ? 0
       : Math.max(
           ...habits.map(
-            habit => habit.streak
+            habit =>
+              habit.bestStreak ||
+              habit.streak ||
+              0
           )
         );
 
@@ -284,26 +459,31 @@ function updateStats() {
 
 
   bestStreak.textContent =
-    highestStreak;
+    highestBestStreak;
 
 }
 
 
-/* PROTECT USER INPUT */
+/* ================================
+   PROTECT USER INPUT
+================================ */
 
 function escapeHTML(text) {
 
   const div =
     document.createElement("div");
 
-  div.textContent = text;
+  div.textContent =
+    text;
 
   return div.innerHTML;
 
 }
 
 
-/* ADD BUTTON */
+/* ================================
+   ADD BUTTON
+================================ */
 
 addHabitBtn.addEventListener(
   "click",
@@ -311,7 +491,9 @@ addHabitBtn.addEventListener(
 );
 
 
-/* ENTER KEY */
+/* ================================
+   ENTER KEY
+================================ */
 
 habitInput.addEventListener(
   "keydown",
@@ -327,6 +509,10 @@ habitInput.addEventListener(
 );
 
 
-/* START APP */
+/* ================================
+   START APP
+================================ */
+
+updateDailyStatus();
 
 renderHabits();
