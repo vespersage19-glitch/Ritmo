@@ -2,23 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <meta
     name="theme-color"
-    content="#111827"
+    content="#101722"
   >
 
-  <title>Ritmo — Build Your Rhythm</title>
+  <title>Ritmo — Daily Habit Tracker</title>
 
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
 
   <main class="app">
-
-    <!-- HEADER -->
 
     <header class="header">
 
@@ -38,15 +39,13 @@
 
       <div
         class="progress-circle"
-        aria-label="Today's completion percentage"
+        aria-label="Today's progress"
       >
         <span id="progressPercent">0%</span>
       </div>
 
     </header>
 
-
-    <!-- STATS -->
 
     <section class="stats">
 
@@ -94,21 +93,12 @@
     </section>
 
 
-    <!-- ADD HABIT -->
-
     <section class="add-section">
-
-      <label
-        class="sr-only"
-        for="habitInput"
-      >
-        New habit
-      </label>
 
       <input
         id="habitInput"
         type="text"
-        placeholder="Add a habit..."
+        placeholder="Drink water"
         maxlength="50"
         autocomplete="off"
       >
@@ -123,33 +113,27 @@
     </section>
 
 
-    <!-- HABIT TRACKER -->
-
     <section class="tracker-card">
 
       <div class="tracker-top">
 
         <div>
-
           <p class="section-label">
             WEEKLY TRACKER
           </p>
 
           <h2>Your Habits</h2>
-
         </div>
 
-
-        <div class="today-label">
-          <span id="todayLabel">
-            Today
-          </span>
-        </div>
+        <span
+          id="todayLabel"
+          class="today-label"
+        >
+          Today
+        </span>
 
       </div>
 
-
-      <!-- WEEK NAVIGATION -->
 
       <div class="week-navigation">
 
@@ -162,15 +146,9 @@
           ‹
         </button>
 
-
-        <div class="week-display">
-
-          <strong id="weekLabel">
-            This Week
-          </strong>
-
-        </div>
-
+        <strong id="weekLabel">
+          This Week
+        </strong>
 
         <button
           id="nextWeekBtn"
@@ -193,8 +171,6 @@
       </button>
 
 
-      <!-- MATRIX -->
-
       <div class="matrix-scroll">
 
         <div
@@ -205,12 +181,9 @@
       </div>
 
 
-      <!-- EMPTY STATE -->
-
       <div
         id="emptyState"
         class="empty-state"
-        hidden
       >
 
         <div class="empty-icon">
@@ -230,20 +203,17 @@
     </section>
 
 
-    <!-- FOOTER -->
-
     <footer>
-
-      <p>
-        Ritmo · Build your rhythm.
-      </p>
-
+      Ritmo · Build your rhythm.
     </footer>
 
   </main>
 
 
-  <script src="script.js"></script>
+  <script
+    src="./script.js?v=3"
+    defer
+  ></script>
 
 </body>
 </html>
