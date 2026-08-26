@@ -2,24 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   >
 
   <meta
     name="theme-color"
-    content="#101722"
+    content="#F5F3EE"
   >
 
-  <title>Ritmo — Daily Habit Tracker</title>
+  <meta
+    name="description"
+    content="Ritmo — Build your rhythm, one habit at a time."
+  >
 
-  <link rel="stylesheet" href="./style.css">
+  <title>Ritmo — Build Your Rhythm</title>
+
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
   <main class="app">
+
+    <!-- ================= HEADER ================= -->
 
     <header class="header">
 
@@ -29,7 +37,9 @@
           YOUR DAILY RHYTHM
         </p>
 
-        <h1>Ritmo</h1>
+        <h1>
+          Ritmo
+        </h1>
 
         <p class="subtitle">
           Small habits. Better days.
@@ -37,27 +47,68 @@
 
       </div>
 
+
       <div
         class="progress-circle"
+        id="progressCircle"
         aria-label="Today's progress"
       >
-        <span id="progressPercent">0%</span>
+
+        <svg
+          class="progress-svg"
+          viewBox="0 0 100 100"
+          aria-hidden="true"
+        >
+
+          <circle
+            class="progress-track"
+            cx="50"
+            cy="50"
+            r="43"
+          ></circle>
+
+          <circle
+            class="progress-value"
+            id="progressRing"
+            cx="50"
+            cy="50"
+            r="43"
+          ></circle>
+
+        </svg>
+
+        <span id="progressPercent">
+          0%
+        </span>
+
       </div>
 
     </header>
 
 
-    <section class="stats">
+    <!-- ================= STATS ================= -->
+
+    <section
+      class="stats"
+      aria-label="Habit statistics"
+    >
 
       <article class="stat-card">
 
-        <div class="stat-icon streak-icon">
+        <div class="stat-icon gold">
           <span>✦</span>
         </div>
 
         <div>
-          <strong id="bestStreak">0</strong>
-          <small>Best Streak</small>
+
+          <strong id="bestStreak">
+            0
+          </strong>
+
+          <small>
+            Best Streak
+          </small>
+
         </div>
 
       </article>
@@ -65,13 +116,20 @@
 
       <article class="stat-card">
 
-        <div class="stat-icon done-icon">
+        <div class="stat-icon green">
           <span>✓</span>
         </div>
 
         <div>
-          <strong id="completedCount">0</strong>
-          <small>Done Today</small>
+
+          <strong id="completedCount">
+            0
+          </strong>
+
+          <small>
+            Done Today
+          </small>
+
         </div>
 
       </article>
@@ -79,13 +137,20 @@
 
       <article class="stat-card">
 
-        <div class="stat-icon habit-icon">
-          <span>+</span>
+        <div class="stat-icon neutral">
+          <span>＋</span>
         </div>
 
         <div>
-          <strong id="totalHabits">0</strong>
-          <small>Total Habits</small>
+
+          <strong id="totalHabits">
+            0
+          </strong>
+
+          <small>
+            Total Habits
+          </small>
+
         </div>
 
       </article>
@@ -93,14 +158,17 @@
     </section>
 
 
+    <!-- ================= ADD HABIT ================= -->
+
     <section class="add-section">
 
       <input
         id="habitInput"
         type="text"
-        placeholder="Drink water"
         maxlength="50"
         autocomplete="off"
+        placeholder="Drink water"
+        aria-label="Habit name"
       >
 
       <button
@@ -113,27 +181,33 @@
     </section>
 
 
+    <!-- ================= TRACKER ================= -->
+
     <section class="tracker-card">
 
-      <div class="tracker-top">
+      <div class="tracker-header">
 
         <div>
+
           <p class="section-label">
             WEEKLY TRACKER
           </p>
 
-          <h2>Your Habits</h2>
+          <h2>
+            Your Habits
+          </h2>
+
         </div>
 
         <span
-          id="todayLabel"
-          class="today-label"
-        >
-          Today
-        </span>
+          id="date"
+          class="current-date"
+        ></span>
 
       </div>
 
+
+      <!-- WEEK NAVIGATION -->
 
       <div class="week-navigation">
 
@@ -163,15 +237,20 @@
 
 
       <button
-        id="currentWeekBtn"
-        class="current-week-button"
+        id="todayBtn"
+        class="today-button"
         type="button"
       >
         Today
       </button>
 
 
-      <div class="matrix-scroll">
+      <!-- MATRIX -->
+
+      <div
+        id="matrixScroll"
+        class="matrix-scroll"
+      >
 
         <div
           id="habitMatrix"
@@ -181,12 +260,14 @@
       </div>
 
 
+      <!-- EMPTY STATE -->
+
       <div
         id="emptyState"
         class="empty-state"
       >
 
-        <div class="empty-icon">
+        <div class="empty-mark">
           +
         </div>
 
@@ -195,13 +276,15 @@
         </h3>
 
         <p>
-          Add your first habit and start building consistency.
+          Add your first habit and begin building consistency.
         </p>
 
       </div>
 
     </section>
 
+
+    <!-- ================= FOOTER ================= -->
 
     <footer>
       Ritmo · Build your rhythm.
@@ -210,10 +293,7 @@
   </main>
 
 
-  <script
-    src="./script.js?v=3"
-    defer
-  ></script>
+  <script src="script.js"></script>
 
 </body>
 </html>
