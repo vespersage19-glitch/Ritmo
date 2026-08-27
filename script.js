@@ -1,68 +1,31 @@
 /* =========================================================
-   RITMO
-   Complete Habit Tracker Engine
+   RITMO — COMPLETE SCRIPT
+   Weekly Sunday → Saturday
+   Permanent history
+   Permanent Best Streak
 ========================================================= */
 
-"use strict";
+const STORAGE_KEY = "ritmo-v3-data";
 
+const habitInput = document.getElementById("habitInput");
+const addHabitBtn = document.getElementById("addHabitBtn");
 
-/* =========================================================
-   STORAGE
-========================================================= */
+const habitMatrix = document.getElementById("habitMatrix");
+const emptyState = document.getElementById("emptyState");
 
-const STORAGE_KEY = "ritmo-v4-data";
+const progressPercent = document.getElementById("progressPercent");
+const progressRing = document.getElementById("progressRing");
 
+const completedCount = document.getElementById("completedCount");
+const totalHabits = document.getElementById("totalHabits");
+const bestStreak = document.getElementById("bestStreak");
 
-/* =========================================================
-   DOM
-========================================================= */
+const weekLabel = document.getElementById("weekLabel");
+const dateElement = document.getElementById("date");
 
-const habitInput =
-  document.getElementById("habitInput");
-
-const addHabitBtn =
-  document.getElementById("addHabitBtn");
-
-const habitMatrix =
-  document.getElementById("habitMatrix");
-
-const emptyState =
-  document.getElementById("emptyState");
-
-const progressPercent =
-  document.getElementById("progressPercent");
-
-const progressRing =
-  document.getElementById("progressRing");
-
-const completedCount =
-  document.getElementById("completedCount");
-
-const totalHabits =
-  document.getElementById("totalHabits");
-
-const bestStreak =
-  document.getElementById("bestStreak");
-
-const weekLabel =
-  document.getElementById("weekLabel");
-
-const dateElement =
-  document.getElementById("date");
-
-const previousWeekBtn =
-  document.getElementById("previousWeekBtn");
-
-const nextWeekBtn =
-  document.getElementById("nextWeekBtn");
-
-const todayBtn =
-  document.getElementById("todayBtn");
-
-
-/* =========================================================
-   CONSTANTS
-========================================================= */
+const previousWeekBtn = document.getElementById("previousWeekBtn");
+const nextWeekBtn = document.getElementById("nextWeekBtn");
+const todayBtn = document.getElementById("todayBtn");
 
 const DAY_NAMES = [
   "Sun",
@@ -74,125 +37,89 @@ const DAY_NAMES = [
   "Sat"
 ];
 
-
-/* =========================================================
-   STATE
-========================================================= */
-
-let viewedWeekStart =
-  startOfWeek(new Date());
-
-let data =
-  loadData();
+let viewedWeekStart;
+let data;
 
 
 /* =========================================================
-   DATE FUNCTIONS
+   DATE HELPERS
 ========================================================= */
 
 function pad(value) {
-
   return String(value).padStart(2, "0");
-
 }
 
 
 function getDateKey(date = new Date()) {
-
   return (
-    `${date.getFullYear()}-` +
-    `${pad(date.getMonth() + 1)}-` +
-    `${pad(date.getDate())}`
+    date.getFullYear() +
+    "-" +
+    pad(date.getMonth() + 1) +
+    "-" +
+    pad(date.getDate())
   );
-
 }
 
 
 function parseDateKey(key) {
-
-  const parts =
-    key.split("-").map(Number);
+  const parts = key.split("-").map(Number);
 
   return new Date(
     parts[0],
     parts[1] - 1,
     parts[2]
   );
-
 }
 
 
 function startOfWeek(date) {
-
-  const result =
-    new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate()
-    );
+  const result = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate()
+  );
 
   result.setDate(
     result.getDate() - result.getDay()
   );
 
   return result;
-
 }
 
 
 function addDays(date, amount) {
-
-  const result =
-    new Date(date);
+  const result = new Date(date);
 
   result.setDate(
     result.getDate() + amount
   );
 
   return result;
-
 }
 
 
 function isSameDate(first, second) {
-
   return (
     getDateKey(first) ===
     getDateKey(second)
   );
-
 }
 
 
 function isFutureDate(date) {
+  const today = new Date();
 
-  const today =
-    new Date();
+  today.setHours(0, 0, 0, 0);
 
-  today.setHours(
-    0,
-    0,
-    0,
-    0
-  );
+  const target = new Date(date);
 
-  const target =
-    new Date(date);
-
-  target.setHours(
-    0,
-    0,
-    0,
-    0
-  );
+  target.setHours(0, 0, 0, 0);
 
   return target > today;
-
 }
 
 
 function formatDate(date) {
-
   return date.toLocaleDateString(
     "en-IN",
     {
@@ -200,14 +127,11 @@ function formatDate(date) {
       month: "short"
     }
   );
-
 }
 
 
 function formatWeekRange(start) {
-
-  const end =
-    addDays(start, 6);
+  const end = addDays(start, 6);
 
   const startText =
     start.toLocaleDateString(
@@ -223,12 +147,12 @@ function formatWeekRange(start) {
       "en-IN",
       {
         day: "numeric",
-        month: "short"
+        month: "short",
+        year: "numeric"
       }
     );
 
   return `${startText} – ${endText}`;
-
 }
 
 
@@ -237,9 +161,8 @@ function formatWeekRange(start) {
 ========================================================= */
 
 function createEmptyData() {
-
   return {
-    version: 4,
+    version: 3,
 
     habits: [],
 
@@ -247,88 +170,74 @@ function createEmptyData() {
       bestStreak: 0
     }
   };
-
 }
 
 
 function normalizeCompletions(completions) {
-
   if (
     !completions ||
     typeof completions !== "object"
   ) {
-
     return {};
-
   }
 
   const result = {};
 
-  Object.entries(completions)
-    .forEach(([key, value]) => {
+  Object.entries(completions).forEach(
+    ([key, value]) => {
 
       if (
         /^\d{4}-\d{2}-\d{2}$/.test(key) &&
         value === true
       ) {
-
         result[key] = true;
-
       }
 
-    });
+    }
+  );
 
   return result;
-
 }
 
 
 function normalizeData(raw) {
-
-  const clean =
-    createEmptyData();
+  const clean = createEmptyData();
 
   if (
     !raw ||
     typeof raw !== "object"
   ) {
-
     return clean;
-
   }
 
-
-  if (
-    Array.isArray(raw.habits)
-  ) {
+  if (Array.isArray(raw.habits)) {
 
     clean.habits =
       raw.habits
-        .filter(habit => {
 
-          return (
+        .filter(
+          habit =>
             habit &&
             typeof habit === "object" &&
-            String(habit.name || "").trim()
-          );
+            String(
+              habit.name || ""
+            ).trim()
+        )
 
-        })
-        .map(habit => {
-
-          return {
-
+        .map(
+          habit => ({
             id:
               String(
                 habit.id ||
-                `${Date.now()}-${Math.random()
-                  .toString(36)
-                  .slice(2)}`
+                `${Date.now()}-${Math.random()}`
               ),
 
             name:
-              String(habit.name)
-                .trim()
-                .slice(0, 50),
+              String(
+                habit.name
+              )
+              .trim()
+              .slice(0, 50),
 
             createdAt:
               habit.createdAt ||
@@ -338,13 +247,9 @@ function normalizeData(raw) {
               normalizeCompletions(
                 habit.completions
               )
-
-          };
-
-        });
-
+          })
+        );
   }
-
 
   const savedBest =
     Number(
@@ -352,31 +257,25 @@ function normalizeData(raw) {
       raw.stats.bestStreak
     );
 
-
   if (
     Number.isFinite(savedBest) &&
     savedBest >= 0
   ) {
-
     clean.stats.bestStreak =
       Math.floor(savedBest);
-
   }
 
-
   return clean;
-
 }
 
 
 /* =========================================================
-   LEGACY MIGRATION
+   LOAD OLD DATA
 ========================================================= */
 
 function migrateLegacyData() {
 
-  const result =
-    createEmptyData();
+  const result = createEmptyData();
 
   try {
 
@@ -396,65 +295,62 @@ function migrateLegacyData() {
       return result;
     }
 
-    legacy.forEach((habit, index) => {
+    legacy.forEach(
+      (habit, index) => {
 
-      if (
-        !habit ||
-        !String(habit.name || "").trim()
-      ) {
+        if (
+          !habit ||
+          !String(
+            habit.name || ""
+          ).trim()
+        ) {
+          return;
+        }
 
-        return;
+        const completions = {};
 
-      }
+        if (
+          habit.completed === true &&
+          /^\d{4}-\d{2}-\d{2}$/.test(
+            habit.lastCompletedDate || ""
+          )
+        ) {
+          completions[
+            habit.lastCompletedDate
+          ] = true;
+        }
 
-      const completions = {};
+        result.habits.push({
 
-      if (
-        habit.completed === true &&
-        /^\d{4}-\d{2}-\d{2}$/.test(
-          habit.lastCompletedDate || ""
-        )
-      ) {
+          id:
+            String(
+              habit.id ||
+              `${Date.now()}-${index}`
+            ),
 
-        completions[
-          habit.lastCompletedDate
-        ] = true;
-
-      }
-
-      result.habits.push({
-
-        id:
-          String(
-            habit.id ||
-            `${Date.now()}-${index}`
-          ),
-
-        name:
-          String(habit.name)
+          name:
+            String(
+              habit.name
+            )
             .trim()
             .slice(0, 50),
 
-        createdAt:
-          new Date().toISOString(),
+          createdAt:
+            new Date().toISOString(),
 
-        completions
+          completions
 
-      });
+        });
 
+        result.stats.bestStreak =
+          Math.max(
+            result.stats.bestStreak,
+            Number(habit.bestStreak) || 0,
+            Number(habit.streak) || 0
+          );
 
-      result.stats.bestStreak =
-        Math.max(
-
-          result.stats.bestStreak,
-
-          Number(habit.bestStreak) || 0,
-
-          Number(habit.streak) || 0
-
-        );
-
-    });
+      }
+    );
 
   }
 
@@ -468,7 +364,6 @@ function migrateLegacyData() {
   }
 
   return result;
-
 }
 
 
@@ -505,7 +400,6 @@ function loadData() {
   }
 
   return migrateLegacyData();
-
 }
 
 
@@ -528,7 +422,6 @@ function saveData() {
     );
 
   }
-
 }
 
 
@@ -542,59 +435,53 @@ function calculateBestStreak(habit) {
     Object.keys(
       habit.completions || {}
     )
-      .filter(key => {
+    .filter(
+      key =>
+        habit.completions[key] === true
+    )
+    .sort();
 
-        return (
-          habit.completions[key] === true
+  let best = 0;
+  let current = 0;
+  let previous = null;
+
+  dates.forEach(
+    key => {
+
+      if (previous) {
+
+        const difference =
+          Math.round(
+            (
+              parseDateKey(key) -
+              parseDateKey(previous)
+            ) / 86400000
+          );
+
+        if (difference === 1) {
+          current++;
+        }
+        else {
+          current = 1;
+        }
+
+      }
+      else {
+        current = 1;
+      }
+
+      best =
+        Math.max(
+          best,
+          current
         );
 
-      })
-      .sort();
-
-  if (dates.length === 0) {
-    return 0;
-  }
-
-  let best = 1;
-
-  let current = 1;
-
-  for (
-    let i = 1;
-    i < dates.length;
-    i++
-  ) {
-
-    const difference =
-      Math.round(
-        (
-          parseDateKey(dates[i]) -
-          parseDateKey(dates[i - 1])
-        ) / 86400000
-      );
-
-    if (difference === 1) {
-
-      current++;
+      previous = key;
 
     }
-
-    else {
-
-      current = 1;
-
-    }
-
-    best =
-      Math.max(
-        best,
-        current
-      );
-
-  }
+  );
 
   return best;
-
 }
 
 
@@ -606,15 +493,12 @@ function calculateCurrentStreak(habit) {
   if (
     habit.completions[todayKey] !== true
   ) {
-
     return 0;
-
   }
 
   let streak = 0;
 
-  let cursor =
-    new Date();
+  let cursor = new Date();
 
   while (
     habit.completions[
@@ -629,29 +513,25 @@ function calculateCurrentStreak(habit) {
         cursor,
         -1
       );
-
   }
 
   return streak;
-
 }
 
 
 function updatePermanentBestStreak() {
 
-  data.habits.forEach(habit => {
+  data.habits.forEach(
+    habit => {
 
-    data.stats.bestStreak =
-      Math.max(
+      data.stats.bestStreak =
+        Math.max(
+          data.stats.bestStreak,
+          calculateBestStreak(habit)
+        );
 
-        data.stats.bestStreak,
-
-        calculateBestStreak(habit)
-
-      );
-
-  });
-
+    }
+  );
 }
 
 
@@ -665,35 +545,24 @@ function addHabit() {
     habitInput.value.trim();
 
   if (!name) {
-
     habitInput.focus();
-
     return;
-
   }
 
-
   const exists =
-    data.habits.some(habit => {
-
-      return (
+    data.habits.some(
+      habit =>
         habit.name.toLowerCase() ===
         name.toLowerCase()
-      );
-
-    });
-
+    );
 
   if (exists) {
 
     habitInput.focus();
-
     habitInput.select();
 
     return;
-
   }
-
 
   data.habits.push({
 
@@ -712,7 +581,6 @@ function addHabit() {
 
   });
 
-
   habitInput.value = "";
 
   saveData();
@@ -720,12 +588,11 @@ function addHabit() {
   render();
 
   habitInput.focus();
-
 }
 
 
 /* =========================================================
-   TOGGLE COMPLETION
+   TOGGLE
 ========================================================= */
 
 function toggleCompletion(
@@ -743,15 +610,12 @@ function toggleCompletion(
     return;
   }
 
-
   const date =
     parseDateKey(dateKey);
-
 
   if (isFutureDate(date)) {
     return;
   }
-
 
   if (
     habit.completions[dateKey] === true
@@ -760,25 +624,22 @@ function toggleCompletion(
     delete habit.completions[dateKey];
 
   }
-
   else {
 
     habit.completions[dateKey] = true;
 
   }
 
-
   updatePermanentBestStreak();
 
   saveData();
 
   render();
-
 }
 
 
 /* =========================================================
-   DELETE HABIT
+   DELETE
 ========================================================= */
 
 function deleteHabit(habitId) {
@@ -793,17 +654,14 @@ function deleteHabit(habitId) {
     return;
   }
 
-
   const confirmed =
     window.confirm(
-      `Delete "${habit.name}"?`
+      `Delete "${habit.name}"? Your Best Streak will be kept.`
     );
-
 
   if (!confirmed) {
     return;
   }
-
 
   data.habits =
     data.habits.filter(
@@ -811,11 +669,9 @@ function deleteHabit(habitId) {
         item.id !== habitId
     );
 
-
   saveData();
 
   render();
-
 }
 
 
@@ -826,19 +682,48 @@ function deleteHabit(habitId) {
 function getWeekDates() {
 
   return Array.from(
-    {
-      length: 7
-    },
-    (_, index) => {
-
-      return addDays(
+    { length: 7 },
+    (_, index) =>
+      addDays(
         viewedWeekStart,
         index
-      );
-
-    }
+      )
   );
+}
 
+
+function goToPreviousWeek() {
+
+  viewedWeekStart =
+    addDays(
+      viewedWeekStart,
+      -7
+    );
+
+  render();
+}
+
+
+function goToNextWeek() {
+
+  viewedWeekStart =
+    addDays(
+      viewedWeekStart,
+      7
+    );
+
+  render();
+}
+
+
+function goToToday() {
+
+  viewedWeekStart =
+    startOfWeek(
+      new Date()
+    );
+
+  render();
 }
 
 
@@ -848,30 +733,38 @@ function getWeekDates() {
 
 function renderWeekHeader() {
 
-  weekLabel.textContent =
-    formatWeekRange(
-      viewedWeekStart
-    );
+  if (weekLabel) {
 
+    weekLabel.textContent =
+      formatWeekRange(
+        viewedWeekStart
+      );
 
-  dateElement.textContent =
-    formatDate(
-      new Date()
-    );
+  }
 
+  if (dateElement) {
 
-  const currentWeek =
+    dateElement.textContent =
+      formatDate(
+        new Date()
+      );
+
+  }
+
+  const thisWeek =
     startOfWeek(
       new Date()
     );
 
+  if (todayBtn) {
 
-  todayBtn.disabled =
-    isSameDate(
-      viewedWeekStart,
-      currentWeek
-    );
+    todayBtn.disabled =
+      isSameDate(
+        viewedWeekStart,
+        thisWeek
+      );
 
+  }
 }
 
 
@@ -893,39 +786,27 @@ function createDayButton(
   const future =
     isFutureDate(date);
 
-
   const button =
     document.createElement("button");
 
-
   button.type = "button";
-
 
   button.className =
     "day-cell";
 
-
   if (completed) {
-
     button.classList.add(
       "is-complete"
     );
-
   }
 
-
   if (future) {
-
     button.classList.add(
       "is-future"
     );
-
   }
 
-
-  button.disabled =
-    future;
-
+  button.disabled = future;
 
   button.setAttribute(
     "aria-label",
@@ -937,7 +818,6 @@ function createDayButton(
         : "not completed"
     }`
   );
-
 
   if (completed) {
 
@@ -952,9 +832,7 @@ function createDayButton(
     );
 
     button.appendChild(tick);
-
   }
-
 
   button.addEventListener(
     "click",
@@ -968,9 +846,7 @@ function createDayButton(
     }
   );
 
-
   return button;
-
 }
 
 
@@ -982,17 +858,12 @@ function renderMatrix(dates) {
 
   habitMatrix.innerHTML = "";
 
-
-  if (
-    data.habits.length === 0
-  ) {
+  if (data.habits.length === 0) {
 
     emptyState.hidden = false;
 
     return;
-
   }
-
 
   emptyState.hidden = true;
 
@@ -1005,7 +876,6 @@ function renderMatrix(dates) {
   header.className =
     "matrix-row matrix-header";
 
-
   const habitHeading =
     document.createElement("div");
 
@@ -1015,183 +885,171 @@ function renderMatrix(dates) {
   habitHeading.textContent =
     "Habit";
 
-
   header.appendChild(
     habitHeading
   );
 
 
-  dates.forEach(date => {
+  dates.forEach(
+    date => {
 
-    const day =
-      document.createElement("div");
+      const day =
+        document.createElement("div");
 
-    day.className =
-      "day-column";
+      day.className =
+        "day-column";
 
+      if (
+        isSameDate(
+          date,
+          new Date()
+        )
+      ) {
 
-    if (
-      isSameDate(
-        date,
-        new Date()
-      )
-    ) {
+        day.classList.add(
+          "is-today"
+        );
 
-      day.classList.add(
-        "is-today"
+      }
+
+      const name =
+        document.createElement("span");
+
+      name.className =
+        "day-name";
+
+      name.textContent =
+        DAY_NAMES[
+          date.getDay()
+        ];
+
+      const number =
+        document.createElement("span");
+
+      number.className =
+        "day-date";
+
+      number.textContent =
+        date.getDate();
+
+      day.append(
+        name,
+        number
       );
 
+      header.appendChild(day);
+
     }
-
-
-    const name =
-      document.createElement("span");
-
-    name.className =
-      "day-name";
-
-    name.textContent =
-      DAY_NAMES[
-        date.getDay()
-      ];
-
-
-    const number =
-      document.createElement("span");
-
-    number.className =
-      "day-date";
-
-    number.textContent =
-      date.getDate();
-
-
-    day.append(
-      name,
-      number
-    );
-
-
-    header.appendChild(day);
-
-  });
-
+  );
 
   habitMatrix.appendChild(header);
 
 
   /* HABITS */
 
-  data.habits.forEach(habit => {
+  data.habits.forEach(
+    habit => {
 
-    const row =
-      document.createElement("div");
+      const row =
+        document.createElement("div");
 
-    row.className =
-      "matrix-row habit-row";
+      row.className =
+        "matrix-row habit-row";
 
+      const habitColumn =
+        document.createElement("div");
 
-    const habitColumn =
-      document.createElement("div");
+      habitColumn.className =
+        "habit-column";
 
-    habitColumn.className =
-      "habit-column";
+      const info =
+        document.createElement("div");
 
+      info.className =
+        "habit-info";
 
-    const info =
-      document.createElement("div");
+      const name =
+        document.createElement("span");
 
-    info.className =
-      "habit-info";
+      name.className =
+        "habit-name";
 
+      name.textContent =
+        habit.name;
 
-    const name =
-      document.createElement("span");
+      const streak =
+        document.createElement("span");
 
-    name.className =
-      "habit-name";
+      streak.className =
+        "habit-streak";
 
-    name.textContent =
-      habit.name;
-
-
-    const streak =
-      document.createElement("span");
-
-    streak.className =
-      "habit-streak";
-
-
-    const currentStreak =
-      calculateCurrentStreak(
-        habit
-      );
-
-
-    streak.textContent =
-      currentStreak > 0
-        ? `${currentStreak} day streak`
-        : "No active streak";
-
-
-    info.append(
-      name,
-      streak
-    );
-
-
-    const deleteButton =
-      document.createElement("button");
-
-    deleteButton.type =
-      "button";
-
-    deleteButton.className =
-      "delete-button";
-
-    deleteButton.textContent =
-      "Delete";
-
-
-    deleteButton.addEventListener(
-      "click",
-      () => {
-
-        deleteHabit(
-          habit.id
+      const currentStreak =
+        calculateCurrentStreak(
+          habit
         );
 
-      }
-    );
+      streak.textContent =
+        currentStreak > 0
+          ? `${currentStreak} day streak`
+          : "No active streak";
 
-
-    habitColumn.append(
-      info,
-      deleteButton
-    );
-
-
-    row.appendChild(
-      habitColumn
-    );
-
-
-    dates.forEach(date => {
-
-      row.appendChild(
-        createDayButton(
-          habit,
-          date
-        )
+      info.append(
+        name,
+        streak
       );
 
-    });
+
+      const deleteButton =
+        document.createElement("button");
+
+      deleteButton.type = "button";
+
+      deleteButton.className =
+        "delete-button";
+
+      deleteButton.textContent =
+        "Delete";
+
+      deleteButton.addEventListener(
+        "click",
+        () => {
+
+          deleteHabit(
+            habit.id
+          );
+
+        }
+      );
 
 
-    habitMatrix.appendChild(row);
+      habitColumn.append(
+        info,
+        deleteButton
+      );
 
-  });
+      row.appendChild(
+        habitColumn
+      );
 
+
+      dates.forEach(
+        date => {
+
+          row.appendChild(
+            createDayButton(
+              habit,
+              date
+            )
+          );
+
+        }
+      );
+
+
+      habitMatrix.appendChild(row);
+
+    }
+  );
 }
 
 
@@ -1204,10 +1062,8 @@ function updateStats() {
   const todayKey =
     getDateKey();
 
-
   const total =
     data.habits.length;
-
 
   const completed =
     data.habits.filter(
@@ -1216,7 +1072,6 @@ function updateStats() {
           todayKey
         ] === true
     ).length;
-
 
   const percentage =
     total === 0
@@ -1228,45 +1083,39 @@ function updateStats() {
           ) * 100
         );
 
-
   totalHabits.textContent =
     total;
-
 
   completedCount.textContent =
     completed;
 
+  progressPercent.textContent =
+    `${percentage}%`;
 
   bestStreak.textContent =
     data.stats.bestStreak;
 
 
-  progressPercent.textContent =
-    `${percentage}%`;
+  if (progressRing) {
 
+    const radius = 43;
 
-  /* Progress ring */
+    const circumference =
+      2 *
+      Math.PI *
+      radius;
 
-  const radius = 43;
+    progressRing.style.strokeDasharray =
+      circumference;
 
-  const circumference =
-    2 *
-    Math.PI *
-    radius;
-
-
-  progressRing.style.strokeDasharray =
-    circumference;
-
-
-  progressRing.style.strokeDashoffset =
-    circumference -
-    (
-      percentage /
-      100
-    ) *
-    circumference;
-
+    progressRing.style.strokeDashoffset =
+      circumference -
+      (
+        percentage /
+        100
+      ) *
+      circumference;
+  }
 }
 
 
@@ -1283,7 +1132,6 @@ function render() {
   );
 
   updateStats();
-
 }
 
 
@@ -1291,98 +1139,78 @@ function render() {
    EVENTS
 ========================================================= */
 
-addHabitBtn.addEventListener(
-  "click",
-  addHabit
-);
+if (addHabitBtn) {
+
+  addHabitBtn.addEventListener(
+    "click",
+    addHabit
+  );
+
+}
 
 
-habitInput.addEventListener(
-  "keydown",
-  event => {
+if (habitInput) {
 
-    if (
-      event.key === "Enter"
-    ) {
+  habitInput.addEventListener(
+    "keydown",
+    event => {
 
-      event.preventDefault();
+      if (event.key === "Enter") {
 
-      addHabit();
+        event.preventDefault();
 
-    }
+        addHabit();
 
-  }
-);
-
-
-previousWeekBtn.addEventListener(
-  "click",
-  () => {
-
-    viewedWeekStart =
-      addDays(
-        viewedWeekStart,
-        -7
-      );
-
-    render();
-
-  }
-);
-
-
-nextWeekBtn.addEventListener(
-  "click",
-  () => {
-
-    const nextWeek =
-      addDays(
-        viewedWeekStart,
-        7
-      );
-
-
-    const currentWeek =
-      startOfWeek(
-        new Date()
-      );
-
-
-    if (
-      nextWeek <= currentWeek
-    ) {
-
-      viewedWeekStart =
-        nextWeek;
-
-      render();
+      }
 
     }
+  );
 
-  }
-);
+}
 
 
-todayBtn.addEventListener(
-  "click",
-  () => {
+if (previousWeekBtn) {
 
-    viewedWeekStart =
-      startOfWeek(
-        new Date()
-      );
+  previousWeekBtn.addEventListener(
+    "click",
+    goToPreviousWeek
+  );
 
-    render();
+}
 
-  }
-);
+
+if (nextWeekBtn) {
+
+  nextWeekBtn.addEventListener(
+    "click",
+    goToNextWeek
+  );
+
+}
+
+
+if (todayBtn) {
+
+  todayBtn.addEventListener(
+    "click",
+    goToToday
+  );
+
+}
 
 
 /* =========================================================
-   START
+   START RITMO
 ========================================================= */
 
+data = loadData();
+
 updatePermanentBestStreak();
+
+viewedWeekStart =
+  startOfWeek(
+    new Date()
+  );
 
 saveData();
 
