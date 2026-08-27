@@ -1,3 +1,108 @@
+/* =========================================================
+   RITMO — PHASE 2
+   Premium Light UI
+   Functionality untouched
+========================================================= */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #f4f1ea;
+  --surface: #fffdf9;
+  --surface-soft: #f8f5ef;
+  --surface-hover: #f1eee7;
+
+  --border: #e5dfd4;
+  --border-strong: #d8d0c3;
+
+  --text: #252822;
+  --text-soft: #666a61;
+  --text-muted: #96988f;
+
+  --green: #557a68;
+  --green-dark: #3f6253;
+  --green-soft: #e8efe9;
+
+  --gold: #b28b52;
+  --gold-soft: #f3eadb;
+
+  --danger: #a85f5f;
+
+  --shadow: 0 10px 30px rgba(50, 45, 35, 0.06);
+
+  --radius-sm: 9px;
+  --radius-md: 13px;
+  --radius-lg: 20px;
+}
+
+
+/* =========================================================
+   BASE
+========================================================= */
+
+html {
+  background: var(--bg);
+  color-scheme: light;
+}
+
+body {
+  min-height: 100vh;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(178, 139, 82, 0.08),
+      transparent 32%
+    ),
+    var(--bg);
+
+  color: var(--text);
+
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    Helvetica,
+    Arial,
+    sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+
+/* =========================================================
+   APP
+========================================================= */
+
+.app {
+  width: min(980px, 100%);
+  margin: 0 auto;
+
+  padding:
+    48px 24px
+    64px;
 }
 
 
@@ -7,13 +112,10 @@
 
 .header {
   display: flex;
-
   align-items: flex-start;
-
   justify-content: space-between;
 
   gap: 30px;
-
   margin-bottom: 34px;
 }
 
@@ -27,11 +129,9 @@
   color: var(--green);
 
   font-size: 9px;
-
   font-weight: 750;
 
   letter-spacing: 2.6px;
-
   line-height: 1;
 }
 
@@ -49,7 +149,6 @@ h1 {
   font-weight: 500;
 
   letter-spacing: -4px;
-
   line-height: 0.88;
 }
 
@@ -59,7 +158,6 @@ h1 {
   color: var(--text-muted);
 
   font-size: 13px;
-
   letter-spacing: 0.1px;
 }
 
@@ -77,7 +175,6 @@ h1 {
   flex-shrink: 0;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
@@ -104,7 +201,6 @@ h1 {
 .progress-track,
 .progress-value {
   fill: none;
-
   stroke-width: 5;
 }
 
@@ -127,7 +223,6 @@ h1 {
   color: var(--text);
 
   font-size: 13px;
-
   font-weight: 700;
 }
 
@@ -151,7 +246,6 @@ h1 {
   min-width: 0;
 
   display: flex;
-
   align-items: center;
 
   gap: 13px;
@@ -184,7 +278,6 @@ h1 {
   flex-shrink: 0;
 
   display: flex;
-
   align-items: center;
   justify-content: center;
 
@@ -195,19 +288,16 @@ h1 {
 
 .stat-icon.gold {
   color: var(--gold);
-
   background: var(--gold-soft);
 }
 
 .stat-icon.green {
   color: var(--green);
-
   background: var(--green-soft);
 }
 
 .stat-icon.neutral {
   color: var(--text-soft);
-
   background: #efede8;
 }
 
@@ -217,7 +307,6 @@ h1 {
   color: var(--text);
 
   font-size: 21px;
-
   font-weight: 700;
 
   line-height: 1;
@@ -231,7 +320,6 @@ h1 {
   color: var(--text-muted);
 
   font-size: 10px;
-
   font-weight: 550;
 }
 
@@ -254,8 +342,7 @@ h1 {
 
   height: 52px;
 
-  padding:
-    0 17px;
+  padding: 0 17px;
 
   color: var(--text);
 
@@ -291,8 +378,7 @@ h1 {
 
   flex-shrink: 0;
 
-  padding:
-    0 22px;
+  padding: 0 22px;
 
   border: 0;
 
@@ -303,7 +389,6 @@ h1 {
   color: white;
 
   font-size: 12px;
-
   font-weight: 700;
 
   cursor: pointer;
@@ -348,7 +433,6 @@ h1 {
   display: flex;
 
   align-items: flex-end;
-
   justify-content: space-between;
 
   gap: 20px;
@@ -364,11 +448,9 @@ h1 {
   color: var(--green);
 
   font-size: 9px;
-
   font-weight: 750;
 
   letter-spacing: 2px;
-
   line-height: 1;
 }
 
@@ -377,7 +459,6 @@ h1 {
   color: var(--text);
 
   font-size: 23px;
-
   font-weight: 700;
 
   letter-spacing: -0.5px;
@@ -401,7 +482,6 @@ h1 {
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
   gap: 16px;
@@ -419,7 +499,6 @@ h1 {
   text-align: center;
 
   font-size: 12px;
-
   font-weight: 650;
 }
 
@@ -487,7 +566,6 @@ h1 {
   color: var(--text-soft);
 
   font-size: 10px;
-
   font-weight: 650;
 
   cursor: pointer;
@@ -565,7 +643,6 @@ h1 {
   color: var(--text-muted);
 
   font-size: 9px;
-
   font-weight: 750;
 
   letter-spacing: 1.5px;
@@ -586,7 +663,6 @@ h1 {
   flex-direction: column;
 
   align-items: center;
-
   justify-content: center;
 
   gap: 3px;
@@ -600,7 +676,6 @@ h1 {
   color: var(--text-muted);
 
   font-size: 8px;
-
   font-weight: 700;
 
   letter-spacing: 0.6px;
@@ -612,7 +687,6 @@ h1 {
   color: var(--text-soft);
 
   font-size: 11px;
-
   font-weight: 650;
 }
 
@@ -642,7 +716,6 @@ h1 {
   color: var(--text);
 
   font-size: 13px;
-
   font-weight: 650;
 
   line-height: 1.25;
@@ -670,7 +743,6 @@ h1 {
   color: #a09e96;
 
   font-size: 8px;
-
   font-weight: 600;
 
   cursor: pointer;
@@ -786,7 +858,6 @@ h1 {
   color: var(--text);
 
   font-size: 16px;
-
   font-weight: 650;
 }
 
@@ -1132,6 +1203,4 @@ footer {
 
     animation-duration: 0.01ms !important;
   }
-   }
-
-
+}
