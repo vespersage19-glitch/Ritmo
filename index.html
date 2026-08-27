@@ -2,314 +2,150 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-
-  <meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
-  >
-
-  <meta
-    name="theme-color"
-    content="#f5f3ee"
-  >
-
-  <meta
-    name="description"
-    content="Ritmo — Build your rhythm, one habit at a time."
-  >
-
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f1ea">
+  <meta name="description" content="Ritmo — Build your rhythm, one habit at a time.">
   <title>Ritmo — Build Your Rhythm</title>
-
   <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-  <main class="app">
+<main class="app">
 
-    <header class="header">
+  <header class="header">
+    <div class="brand">
+      <p class="eyebrow">YOUR DAILY RHYTHM</p>
+      <h1>Ritmo</h1>
+      <p class="subtitle">Small habits. Better days.</p>
+    </div>
 
-      <div class="brand">
-        <p class="eyebrow">YOUR DAILY RHYTHM</p>
+    <div class="progress-circle" aria-label="Today's progress">
+      <svg class="progress-svg" viewBox="0 0 100 100" aria-hidden="true">
+        <circle class="progress-track" cx="50" cy="50" r="43"></circle>
+        <circle class="progress-value" id="progressRing" cx="50" cy="50" r="43"></circle>
+      </svg>
+      <span id="progressPercent">0%</span>
+    </div>
+  </header>
 
-        <h1>Ritmo</h1>
+  <section class="stats" aria-label="Habit statistics">
 
-        <p class="subtitle">
-          Small habits. Better days.
-        </p>
+    <article class="stat-card">
+      <div class="stat-icon gold">✦</div>
+      <div>
+        <strong id="bestStreak">0</strong>
+        <small>Best Streak</small>
       </div>
+    </article>
 
-      <div
-        class="progress-circle"
-        id="progressCircle"
-        aria-label="Today's progress"
-      >
-
-        <svg
-          class="progress-svg"
-          viewBox="0 0 100 100"
-          aria-hidden="true"
-        >
-
-          <circle
-            class="progress-track"
-            cx="50"
-            cy="50"
-            r="43"
-          ></circle>
-
-          <circle
-            class="progress-value"
-            id="progressRing"
-            cx="50"
-            cy="50"
-            r="43"
-          ></circle>
-
-        </svg>
-
-        <span id="progressPercent">0%</span>
-
+    <article class="stat-card">
+      <div class="stat-icon green">✓</div>
+      <div>
+        <strong id="completedCount">0</strong>
+        <small>Done Today</small>
       </div>
+    </article>
 
-    </header>
+    <article class="stat-card">
+      <div class="stat-icon neutral">＋</div>
+      <div>
+        <strong id="totalHabits">0</strong>
+        <small>Total Habits</small>
+      </div>
+    </article>
 
+  </section>
 
-    <section
-      class="stats"
-      aria-label="Habit statistics"
+  <section class="add-section">
+    <input
+      id="habitInput"
+      type="text"
+      maxlength="50"
+      autocomplete="off"
+      placeholder="Add a habit..."
+      aria-label="Habit name"
     >
+    <button id="addHabitBtn" type="button">Add Habit</button>
+  </section>
 
-      <article class="stat-card">
+  <section class="tracker-card">
 
-        <div class="stat-icon gold">
-          <span>✦</span>
-        </div>
+    <div class="tracker-header">
+      <div>
+        <p class="section-label">WEEKLY TRACKER</p>
+        <h2>Your Habits</h2>
+      </div>
+      <span id="date" class="current-date"></span>
+    </div>
 
-        <div>
-          <strong id="bestStreak">0</strong>
-          <small>Best Streak</small>
-        </div>
+    <div class="week-navigation">
+      <button id="previousWeekBtn" class="week-nav-button" type="button" aria-label="Previous week">‹</button>
+      <strong id="weekLabel">This Week</strong>
+      <button id="nextWeekBtn" class="week-nav-button" type="button" aria-label="Next week">›</button>
+    </div>
 
-      </article>
+    <button id="todayBtn" class="today-button" type="button">Today</button>
 
+    <div id="matrixScroll" class="matrix-scroll">
+      <div id="habitMatrix" class="habit-matrix"></div>
+    </div>
 
-      <article class="stat-card">
+    <div id="emptyState" class="empty-state">
+      <div class="empty-mark">+</div>
+      <h3>Your rhythm starts here</h3>
+      <p>Add your first habit and begin building consistency.</p>
+    </div>
 
-        <div class="stat-icon green">
-          <span>✓</span>
-        </div>
+  </section>
 
-        <div>
-          <strong id="completedCount">0</strong>
-          <small>Done Today</small>
-        </div>
+  <button id="historyBtn" class="history-button" type="button">
+    View Progress &amp; History
+  </button>
 
-      </article>
+  <section id="historyPanel" class="history-panel" hidden>
 
+    <div class="history-panel-header">
+      <div>
+        <p class="section-label">OVERVIEW</p>
+        <h2>Progress &amp; History</h2>
+      </div>
 
-      <article class="stat-card">
-
-        <div class="stat-icon neutral">
-          <span>＋</span>
-        </div>
-
-        <div>
-          <strong id="totalHabits">0</strong>
-          <small>Total Habits</small>
-        </div>
-
-      </article>
-
-    </section>
-
-
-    <section class="add-section">
-
-      <input
-        id="habitInput"
-        type="text"
-        maxlength="50"
-        autocomplete="off"
-        placeholder="Add a habit..."
-        aria-label="Habit name"
-      >
-
-      <button
-        id="addHabitBtn"
-        type="button"
-      >
-        Add Habit
+      <button id="historyCloseBtn" class="history-close" type="button">
+        Close
       </button>
+    </div>
 
-    </section>
+    <div class="history-summary">
 
-
-    <section class="tracker-card">
-
-      <div class="tracker-header">
-
-        <div>
-          <p class="section-label">
-            WEEKLY TRACKER
-          </p>
-
-          <h2>Your Habits</h2>
-        </div>
-
-        <span
-          id="date"
-          class="current-date"
-        ></span>
-
+      <div class="history-stat">
+        <strong id="historyTotalHabits">0</strong>
+        <small>Habits Tracked</small>
       </div>
 
-
-      <div class="week-navigation">
-
-        <button
-          id="previousWeekBtn"
-          class="week-nav-button"
-          type="button"
-          aria-label="Previous week"
-        >
-          ‹
-        </button>
-
-        <strong id="weekLabel">
-          This Week
-        </strong>
-
-        <button
-          id="nextWeekBtn"
-          class="week-nav-button"
-          type="button"
-          aria-label="Next week"
-        >
-          ›
-        </button>
-
+      <div class="history-stat">
+        <strong id="historyBestStreak">0</strong>
+        <small>Best Streak Ever</small>
       </div>
 
-
-      <button
-        id="todayBtn"
-        class="today-button"
-        type="button"
-      >
-        Today
-      </button>
-
-
-      <div
-        id="matrixScroll"
-        class="matrix-scroll"
-      >
-
-        <div
-          id="habitMatrix"
-          class="habit-matrix"
-        ></div>
-
+      <div class="history-stat">
+        <strong id="historyTotalCompletions">0</strong>
+        <small>Total Completions</small>
       </div>
 
+    </div>
 
-      <div
-        id="emptyState"
-        class="empty-state"
-      >
+    <div id="historyList" class="history-list"></div>
 
-        <div class="empty-mark">
-          +
-        </div>
+  </section>
 
-        <h3>
-          Your rhythm starts here
-        </h3>
+  <footer>
+    Ritmo · Build your rhythm.
+  </footer>
 
-        <p>
-          Add your first habit and begin building consistency.
-        </p>
+</main>
 
-      </div>
-
-    </section>
-
-
-    <button
-      id="historyBtn"
-      class="history-button"
-      type="button"
-      aria-expanded="false"
-      aria-controls="historyPanel"
-    >
-      View Progress &amp; History
-    </button>
-
-
-    <section
-      id="historyPanel"
-      class="history-panel"
-      hidden
-    >
-
-      <div class="history-panel-header">
-
-        <div>
-          <p class="section-label">
-            OVERVIEW
-          </p>
-
-          <h2>Progress &amp; History</h2>
-        </div>
-
-        <button
-          id="historyCloseBtn"
-          class="history-close"
-          type="button"
-        >
-          Close
-        </button>
-
-      </div>
-
-
-      <div class="history-summary">
-
-        <div class="history-stat">
-          <strong id="historyTotalHabits">0</strong>
-          <small>Habits Tracked</small>
-        </div>
-
-        <div class="history-stat">
-          <strong id="historyBestStreak">0</strong>
-          <small>Best Streak Ever</small>
-        </div>
-
-        <div class="history-stat">
-          <strong id="historyTotalCompletions">0</strong>
-          <small>Total Completions</small>
-        </div>
-
-      </div>
-
-
-      <div
-        id="historyList"
-        class="history-list"
-      ></div>
-
-    </section>
-
-
-    <footer>
-      Ritmo · Build your rhythm.
-    </footer>
-
-  </main>
-
-
-  <script src="script.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
