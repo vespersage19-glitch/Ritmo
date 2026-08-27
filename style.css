@@ -1,7 +1,7 @@
 /* =========================================================
-   RITMO V3 — PREMIUM UI
-   Phase 2A
-   ========================================================= */
+   RITMO
+   Premium Light UI
+========================================================= */
 
 * {
   box-sizing: border-box;
@@ -9,51 +9,66 @@
   padding: 0;
 }
 
+
 :root {
-  --bg: #0a0d0f;
-  --surface: #111518;
-  --surface-2: #151a1d;
-  --surface-3: #1a2023;
 
-  --line: #252c2f;
-  --line-light: #30383b;
+  --bg: #f5f3ee;
 
-  --text: #f1f4f2;
-  --text-soft: #b0b8b5;
-  --text-muted: #707a76;
+  --surface: #ffffff;
 
-  --green: #42c995;
-  --green-dark: #279b70;
-  --green-faint: rgba(66, 201, 149, 0.09);
+  --surface-soft: #faf9f6;
 
-  --gold: #d5ad5b;
-  --gold-faint: rgba(213, 173, 91, 0.10);
+  --line: #e7e3da;
 
-  --danger: #d66f6f;
+  --line-dark: #d9d4c9;
+
+  --text: #202522;
+
+  --text-soft: #666b66;
+
+  --text-muted: #92968f;
+
+  --green: #2e8b67;
+
+  --green-light: #e9f4ef;
+
+  --green-border: #b9dacb;
+
+  --gold: #b28a3e;
+
+  --gold-light: #f7f0df;
+
+  --danger: #bd5c5c;
 
   --radius-sm: 8px;
+
   --radius-md: 12px;
-  --radius-lg: 16px;
+
+  --radius-lg: 18px;
+
 }
 
-
-/* =========================================================
-   BASE
-   ========================================================= */
 
 html {
+
   background: var(--bg);
-  color-scheme: dark;
+
+  color-scheme: light;
+
+  scroll-behavior: smooth;
+
 }
 
+
 body {
+
   min-height: 100vh;
 
   background:
     linear-gradient(
       180deg,
-      #0b0f11 0%,
-      var(--bg) 100%
+      #f8f6f1 0%,
+      #f2f0ea 100%
     );
 
   color: var(--text);
@@ -69,45 +84,62 @@ body {
     sans-serif;
 
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+
 }
+
 
 button,
 input {
+
   font: inherit;
+
 }
 
+
 button {
-  -webkit-tap-highlight-color: transparent;
+
+  -webkit-tap-highlight-color:
+    transparent;
+
 }
+
 
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid var(--green);
+
+  outline:
+    2px solid var(--green);
+
   outline-offset: 2px;
+
 }
 
 
 /* =========================================================
-   APP CONTAINER
-   ========================================================= */
+   APP
+========================================================= */
 
 .app {
-  width: min(980px, 100%);
 
-  margin: 0 auto;
+  width:
+    min(980px, 100%);
+
+  margin:
+    0 auto;
 
   padding:
-    46px 22px
+    48px 22px
     60px;
+
 }
 
 
 /* =========================================================
    HEADER
-   ========================================================= */
+========================================================= */
 
 .header {
+
   display: flex;
 
   align-items: flex-start;
@@ -116,61 +148,70 @@ input:focus-visible {
 
   gap: 30px;
 
-  margin-bottom: 38px;
+  margin-bottom: 36px;
+
 }
+
 
 .brand {
+
   min-width: 0;
+
 }
 
+
 .eyebrow {
+
   margin-bottom: 10px;
 
   color: var(--green);
 
   font-size: 10px;
 
-  font-weight: 700;
+  font-weight: 750;
 
   letter-spacing: 2.4px;
 
-  line-height: 1;
 }
 
+
 h1 {
+
   color: var(--text);
 
   font-size:
     clamp(54px, 8vw, 78px);
 
-  font-weight: 750;
+  font-weight: 760;
 
   letter-spacing: -4.5px;
 
-  line-height: 0.9;
+  line-height: .9;
+
 }
 
+
 .subtitle {
+
   margin-top: 14px;
 
   color: var(--text-muted);
 
   font-size: 14px;
 
-  font-weight: 400;
-
-  letter-spacing: 0.1px;
 }
 
 
 /* =========================================================
-   PROGRESS RING
-   ========================================================= */
+   PROGRESS
+========================================================= */
 
 .progress-circle {
+
   position: relative;
 
   width: 82px;
+
   height: 82px;
 
   flex-shrink: 0;
@@ -185,43 +226,75 @@ h1 {
 
   background: var(--surface);
 
-  border: 1px solid var(--line);
+  border:
+    1px solid var(--line);
 
-  box-shadow:
-    inset 0 0 0 5px var(--green-faint);
 }
 
-.progress-circle::before {
-  content: "";
+
+.progress-svg {
 
   position: absolute;
 
-  inset: 5px;
+  inset: 0;
 
-  border-radius: 50%;
+  width: 100%;
 
-  border: 1px solid
-    rgba(66, 201, 149, 0.18);
+  height: 100%;
+
+  transform:
+    rotate(-90deg);
+
 }
 
+
+.progress-track {
+
+  fill: none;
+
+  stroke: #ebe8e1;
+
+  stroke-width: 5;
+
+}
+
+
+.progress-value {
+
+  fill: none;
+
+  stroke: var(--green);
+
+  stroke-width: 5;
+
+  stroke-linecap: round;
+
+  transition:
+    stroke-dashoffset
+    250ms ease;
+
+}
+
+
 .progress-circle span {
+
   position: relative;
 
   color: var(--text);
 
   font-size: 14px;
 
-  font-weight: 700;
+  font-weight: 750;
 
-  letter-spacing: -0.2px;
 }
 
 
 /* =========================================================
    STATS
-   ========================================================= */
+========================================================= */
 
 .stats {
+
   display: grid;
 
   grid-template-columns:
@@ -230,9 +303,12 @@ h1 {
   gap: 10px;
 
   margin-bottom: 18px;
+
 }
 
+
 .stat-card {
+
   min-width: 0;
 
   display: flex;
@@ -245,23 +321,34 @@ h1 {
 
   background: var(--surface);
 
-  border: 1px solid var(--line);
+  border:
+    1px solid var(--line);
 
-  border-radius: var(--radius-md);
+  border-radius:
+    var(--radius-md);
 
   transition:
-    border-color 160ms ease,
-    background 160ms ease;
+    transform 150ms ease,
+    border-color 150ms ease;
+
 }
+
 
 .stat-card:hover {
-  background: var(--surface-2);
 
-  border-color: var(--line-light);
+  transform:
+    translateY(-1px);
+
+  border-color:
+    var(--line-dark);
+
 }
 
+
 .stat-icon {
+
   width: 34px;
+
   height: 34px;
 
   flex-shrink: 0;
@@ -272,45 +359,61 @@ h1 {
 
   justify-content: center;
 
-  border-radius: var(--radius-sm);
+  border-radius:
+    var(--radius-sm);
 
   font-size: 16px;
 
   font-weight: 700;
+
 }
 
-.streak-icon {
+
+.stat-icon.gold {
+
   color: var(--gold);
 
-  background: var(--gold-faint);
+  background:
+    var(--gold-light);
+
 }
 
-.done-icon {
+
+.stat-icon.green {
+
   color: var(--green);
 
-  background: var(--green-faint);
+  background:
+    var(--green-light);
+
 }
 
-.habit-icon {
+
+.stat-icon.neutral {
+
   color: var(--text-soft);
 
   background:
-    rgba(255, 255, 255, 0.045);
+    #f1efea;
+
 }
 
+
 .stat-card strong {
+
   display: block;
 
   color: var(--text);
 
   font-size: 21px;
 
-  font-weight: 700;
-
   line-height: 1;
+
 }
 
+
 .stat-card small {
+
   display: block;
 
   margin-top: 5px;
@@ -319,26 +422,28 @@ h1 {
 
   font-size: 10px;
 
-  font-weight: 500;
-
-  letter-spacing: 0.2px;
 }
 
 
 /* =========================================================
    ADD HABIT
-   ========================================================= */
+========================================================= */
 
 .add-section {
+
   display: flex;
 
   gap: 8px;
 
   margin-bottom: 22px;
+
 }
 
+
 #habitInput {
+
   width: 100%;
+
   min-width: 0;
 
   height: 52px;
@@ -350,34 +455,42 @@ h1 {
 
   background: var(--surface);
 
-  border: 1px solid var(--line);
+  border:
+    1px solid var(--line);
 
-  border-radius: var(--radius-md);
+  border-radius:
+    var(--radius-md);
 
   outline: none;
 
   transition:
     border-color 160ms ease,
-    background 160ms ease,
     box-shadow 160ms ease;
+
 }
+
 
 #habitInput::placeholder {
-  color: #606a66;
+
+  color: #aaa9a3;
+
 }
 
+
 #habitInput:focus {
-  background: var(--surface-2);
 
   border-color:
-    rgba(66, 201, 149, 0.55);
+    var(--green-border);
 
   box-shadow:
     0 0 0 3px
-    rgba(66, 201, 149, 0.07);
+    var(--green-light);
+
 }
 
+
 #addHabitBtn {
+
   height: 52px;
 
   flex-shrink: 0;
@@ -387,54 +500,65 @@ h1 {
 
   border: 0;
 
-  border-radius: var(--radius-md);
+  border-radius:
+    var(--radius-md);
 
-  background: var(--green);
+  background:
+    var(--green);
 
-  color: #07130f;
+  color: white;
 
   font-size: 12px;
 
   font-weight: 750;
 
-  letter-spacing: 0.1px;
-
   cursor: pointer;
 
   transition:
-    background 160ms ease,
-    transform 100ms ease;
+    transform 100ms ease,
+    background 160ms ease;
+
 }
+
 
 #addHabitBtn:hover {
-  background: #51d5a3;
+
+  background:
+    #267858;
+
 }
+
 
 #addHabitBtn:active {
-  transform: scale(0.98);
+
+  transform:
+    scale(.98);
+
 }
 
 
 /* =========================================================
-   TRACKER CARD
-   ========================================================= */
+   TRACKER
+========================================================= */
 
 .tracker-card {
+
   overflow: hidden;
 
-  background: var(--surface);
+  background:
+    var(--surface);
 
-  border: 1px solid var(--line);
+  border:
+    1px solid var(--line);
 
-  border-radius: var(--radius-lg);
+  border-radius:
+    var(--radius-lg);
+
 }
 
 
-/* =========================================================
-   TRACKER HEADER
-   ========================================================= */
+.tracker-header {
 
-.tracker-top {
   display: flex;
 
   align-items: flex-end;
@@ -444,12 +568,15 @@ h1 {
   gap: 20px;
 
   padding:
-    24px 22px
-    16px;
+    25px 22px
+    17px;
+
 }
 
+
 .section-label {
-  margin-bottom: 6px;
+
+  margin-bottom: 7px;
 
   color: var(--green);
 
@@ -459,35 +586,39 @@ h1 {
 
   letter-spacing: 2px;
 
-  line-height: 1;
 }
 
-.tracker-top h2 {
+
+.tracker-header h2 {
+
   color: var(--text);
 
   font-size: 23px;
 
   font-weight: 700;
 
-  letter-spacing: -0.5px;
+  letter-spacing: -.5px;
+
 }
 
-.today-label {
-  padding-bottom: 2px;
+
+.current-date {
 
   color: var(--text-muted);
 
   font-size: 10px;
 
   white-space: nowrap;
+
 }
 
 
 /* =========================================================
-   WEEK NAVIGATION
-   ========================================================= */
+   WEEK NAV
+========================================================= */
 
 .week-navigation {
+
   display: flex;
 
   align-items: center;
@@ -497,11 +628,14 @@ h1 {
   gap: 18px;
 
   padding:
-    2px 22px
+    0 22px
     12px;
+
 }
 
+
 .week-navigation strong {
+
   width: 180px;
 
   color: var(--text-soft);
@@ -510,11 +644,15 @@ h1 {
 
   font-size: 12px;
 
-  font-weight: 600;
+  font-weight: 650;
+
 }
 
+
 .week-nav-button {
+
   width: 32px;
+
   height: 32px;
 
   display: flex;
@@ -523,39 +661,36 @@ h1 {
 
   justify-content: center;
 
-  border: 1px solid var(--line);
+  border:
+    1px solid var(--line);
 
-  border-radius: var(--radius-sm);
+  border-radius:
+    var(--radius-sm);
 
-  background: transparent;
+  background:
+    var(--surface-soft);
 
   color: var(--text-soft);
 
   font-size: 21px;
 
-  line-height: 1;
-
   cursor: pointer;
 
-  transition:
-    background 150ms ease,
-    color 150ms ease,
-    border-color 150ms ease;
 }
+
 
 .week-nav-button:hover {
-  background: var(--surface-2);
 
-  border-color: var(--line-light);
+  background:
+    #f2f0eb;
 
   color: var(--text);
+
 }
 
-.week-nav-button:active {
-  transform: scale(0.96);
-}
 
-.current-week-button {
+.today-button {
+
   display: block;
 
   margin:
@@ -563,15 +698,17 @@ h1 {
     17px;
 
   padding:
-    7px 15px;
+    7px 16px;
 
-  border: 1px solid var(--line);
+  border:
+    1px solid var(--line);
 
   border-radius: 999px;
 
-  background: transparent;
+  background:
+    transparent;
 
-  color: var(--text-muted);
+  color: var(--text-soft);
 
   font-size: 10px;
 
@@ -579,33 +716,37 @@ h1 {
 
   cursor: pointer;
 
-  transition:
-    color 150ms ease,
-    border-color 150ms ease,
-    background 150ms ease;
 }
 
-.current-week-button:hover:not(:disabled) {
+
+.today-button:hover:not(:disabled) {
+
   color: var(--green);
 
   border-color:
-    rgba(66, 201, 149, 0.35);
+    var(--green-border);
 
-  background: var(--green-faint);
+  background:
+    var(--green-light);
+
 }
 
-.current-week-button:disabled {
-  opacity: 0.35;
+
+.today-button:disabled {
+
+  opacity: .4;
 
   cursor: default;
+
 }
 
 
 /* =========================================================
    MATRIX
-   ========================================================= */
+========================================================= */
 
 .matrix-scroll {
+
   width: 100%;
 
   overflow-x: auto;
@@ -613,13 +754,19 @@ h1 {
   -webkit-overflow-scrolling: touch;
 
   scrollbar-width: thin;
+
 }
+
 
 .habit-matrix {
+
   min-width: 670px;
+
 }
 
+
 .matrix-row {
+
   display: grid;
 
   grid-template-columns:
@@ -630,41 +777,53 @@ h1 {
 
   min-height: 69px;
 
-  border-top: 1px solid var(--line);
+  border-top:
+    1px solid var(--line);
+
 }
 
+
 .matrix-header {
+
   min-height: 55px;
 
   background:
-    rgba(255, 255, 255, 0.012);
+    #fcfbf9;
+
 }
 
+
 .habit-column {
+
   min-width: 0;
 
   padding:
     10px 17px;
+
 }
 
+
 .matrix-heading {
+
   color: var(--text-muted);
 
   font-size: 9px;
 
-  font-weight: 700;
+  font-weight: 750;
 
   letter-spacing: 1.5px;
 
   text-transform: uppercase;
+
 }
 
 
 /* =========================================================
-   DAY HEADERS
-   ========================================================= */
+   DAYS
+========================================================= */
 
 .day-column {
+
   height: 100%;
 
   display: flex;
@@ -677,46 +836,55 @@ h1 {
 
   gap: 3px;
 
-  transition:
-    background 150ms ease;
 }
+
 
 .day-column.is-today {
+
   background:
-    var(--green-faint);
+    var(--green-light);
+
 }
 
+
 .day-name {
+
   color: var(--text-muted);
 
   font-size: 8px;
 
-  font-weight: 700;
+  font-weight: 750;
 
-  letter-spacing: 0.6px;
+  letter-spacing: .6px;
 
-  text-transform: uppercase;
 }
 
+
 .day-date {
+
   color: var(--text-soft);
 
   font-size: 11px;
 
   font-weight: 650;
+
 }
+
 
 .day-column.is-today .day-name,
 .day-column.is-today .day-date {
+
   color: var(--green);
+
 }
 
 
 /* =========================================================
-   HABIT INFORMATION
-   ========================================================= */
+   HABIT INFO
+========================================================= */
 
 .habit-info {
+
   min-width: 0;
 
   display: flex;
@@ -724,9 +892,12 @@ h1 {
   flex-direction: column;
 
   gap: 4px;
+
 }
 
+
 .habit-name {
+
   overflow-wrap: anywhere;
 
   color: var(--text);
@@ -736,17 +907,21 @@ h1 {
   font-weight: 650;
 
   line-height: 1.25;
+
 }
 
+
 .habit-streak {
+
   color: var(--text-muted);
 
   font-size: 9px;
 
-  line-height: 1;
 }
 
+
 .delete-button {
+
   align-self: flex-start;
 
   margin-top: 7px;
@@ -757,7 +932,7 @@ h1 {
 
   background: transparent;
 
-  color: #59625f;
+  color: #aaa9a3;
 
   font-size: 8px;
 
@@ -765,20 +940,24 @@ h1 {
 
   cursor: pointer;
 
-  transition: color 150ms ease;
 }
 
+
 .delete-button:hover {
+
   color: var(--danger);
+
 }
 
 
 /* =========================================================
    CHECK CELLS
-   ========================================================= */
+========================================================= */
 
 .day-cell {
+
   width: 31px;
+
   height: 31px;
 
   justify-self: center;
@@ -789,71 +968,96 @@ h1 {
 
   justify-content: center;
 
-  border: 1px solid var(--line-light);
+  border:
+    1px solid var(--line-dark);
 
   border-radius: 8px;
 
-  background: transparent;
+  background:
+    var(--surface);
 
-  color: #07130f;
+  color: white;
 
   cursor: pointer;
 
   transition:
+    transform 100ms ease,
     background 140ms ease,
-    border-color 140ms ease,
-    transform 100ms ease;
+    border-color 140ms ease;
+
 }
+
 
 .day-cell:hover:not(:disabled) {
+
   border-color:
-    rgba(66, 201, 149, 0.55);
+    var(--green-border);
 
   background:
-    var(--green-faint);
+    var(--green-light);
+
 }
+
 
 .day-cell:active:not(:disabled) {
-  transform: scale(0.92);
+
+  transform:
+    scale(.92);
+
 }
+
 
 .day-cell.is-complete {
-  border-color: var(--green);
 
-  background: var(--green);
+  border-color:
+    var(--green);
+
+  background:
+    var(--green);
+
 }
 
+
 .day-cell.is-complete span {
+
   font-size: 15px;
 
   font-weight: 900;
 
-  line-height: 1;
 }
 
+
 .day-cell.is-future {
-  opacity: 0.22;
+
+  opacity: .3;
 
   cursor: not-allowed;
+
 }
 
 
 /* =========================================================
    EMPTY STATE
-   ========================================================= */
+========================================================= */
 
 .empty-state {
+
   padding:
     48px 22px
     52px;
 
   text-align: center;
 
-  border-top: 1px solid var(--line);
+  border-top:
+    1px solid var(--line);
+
 }
 
-.empty-icon {
+
+.empty-mark {
+
   width: 42px;
+
   height: 42px;
 
   margin:
@@ -866,20 +1070,23 @@ h1 {
 
   justify-content: center;
 
-  border: 1px solid var(--line);
+  border:
+    1px solid var(--line);
 
   border-radius: 11px;
 
-  background: var(--surface-2);
+  background:
+    var(--surface-soft);
 
   color: var(--green);
 
   font-size: 20px;
 
-  font-weight: 400;
 }
 
+
 .empty-state h3 {
+
   margin-bottom: 7px;
 
   color: var(--text);
@@ -887,9 +1094,12 @@ h1 {
   font-size: 16px;
 
   font-weight: 650;
+
 }
 
+
 .empty-state p {
+
   max-width: 300px;
 
   margin: 0 auto;
@@ -899,146 +1109,155 @@ h1 {
   font-size: 11px;
 
   line-height: 1.6;
+
 }
 
 
 /* =========================================================
    FOOTER
-   ========================================================= */
+========================================================= */
 
 footer {
+
   margin-top: 25px;
 
-  color: #4e5754;
+  color: #aaa9a3;
 
   text-align: center;
 
   font-size: 9px;
 
-  letter-spacing: 0.3px;
 }
 
 
 /* =========================================================
-   MOBILE — ANDROID FIRST
-   ========================================================= */
+   MOBILE
+========================================================= */
 
 @media (max-width: 600px) {
 
   .app {
-    width: 100%;
 
     padding:
       27px 12px
       42px;
+
   }
 
 
   .header {
+
     gap: 15px;
 
     margin-bottom: 26px;
+
   }
 
 
   .eyebrow {
+
     font-size: 8px;
 
     letter-spacing: 1.9px;
 
-    margin-bottom: 9px;
   }
 
 
   h1 {
+
     font-size: 52px;
 
     letter-spacing: -3.4px;
+
   }
 
 
   .subtitle {
+
     margin-top: 10px;
 
     font-size: 11px;
+
   }
 
 
   .progress-circle {
+
     width: 62px;
+
     height: 62px;
 
-    border-width: 1px;
-
-    box-shadow:
-      inset 0 0 0 4px
-      var(--green-faint);
-  }
-
-
-  .progress-circle::before {
-    inset: 4px;
   }
 
 
   .progress-circle span {
+
     font-size: 11px;
+
   }
 
 
-  /* STATS */
-
   .stats {
+
     gap: 6px;
 
     margin-bottom: 10px;
+
   }
 
 
   .stat-card {
+
     gap: 7px;
 
     padding:
       11px 8px;
 
     border-radius: 10px;
+
   }
 
 
   .stat-icon {
+
     width: 27px;
+
     height: 27px;
 
     border-radius: 7px;
 
     font-size: 13px;
+
   }
 
 
   .stat-card strong {
+
     font-size: 16px;
+
   }
 
 
   .stat-card small {
+
     margin-top: 4px;
 
     font-size: 7px;
 
-    letter-spacing: 0;
   }
 
 
-  /* INPUT */
-
   .add-section {
+
     gap: 6px;
 
     margin-bottom: 13px;
+
   }
 
 
   #habitInput {
+
     height: 47px;
 
     padding:
@@ -1047,10 +1266,12 @@ footer {
     border-radius: 10px;
 
     font-size: 12px;
+
   }
 
 
   #addHabitBtn {
+
     height: 47px;
 
     padding:
@@ -1059,241 +1280,249 @@ footer {
     border-radius: 10px;
 
     font-size: 10px;
+
   }
 
-
-  /* TRACKER */
 
   .tracker-card {
+
     border-radius: 13px;
+
   }
 
 
-  .tracker-top {
+  .tracker-header {
+
     align-items: center;
 
     padding:
       18px 14px
       13px;
+
   }
 
 
   .section-label {
+
     font-size: 8px;
 
     letter-spacing: 1.6px;
+
   }
 
 
-  .tracker-top h2 {
+  .tracker-header h2 {
+
     font-size: 19px;
+
   }
 
 
-  .today-label {
+  .current-date {
+
     font-size: 8px;
+
   }
 
 
   .week-navigation {
+
     gap: 10px;
 
     padding:
       1px 14px
       10px;
+
   }
 
 
   .week-navigation strong {
+
     width: 145px;
 
     font-size: 11px;
+
   }
 
 
   .week-nav-button {
+
     width: 30px;
+
     height: 30px;
 
-    font-size: 19px;
   }
 
 
-  .current-week-button {
+  .today-button {
+
     margin-bottom: 14px;
 
     padding:
       6px 13px;
 
     font-size: 9px;
+
   }
 
 
-  /* MATRIX */
-
   .habit-matrix {
+
     min-width: 620px;
+
   }
 
 
   .matrix-row {
+
     grid-template-columns:
       minmax(195px, 1fr)
       repeat(7, 53px);
 
     min-height: 65px;
+
   }
 
 
   .matrix-header {
+
     min-height: 53px;
+
   }
 
 
   .habit-column {
+
     padding:
       9px 11px;
-  }
 
-
-  .matrix-heading {
-    font-size: 8px;
-  }
-
-
-  .day-name {
-    font-size: 7px;
-  }
-
-
-  .day-date {
-    font-size: 10px;
   }
 
 
   .habit-name {
+
     font-size: 12px;
+
   }
 
 
   .habit-streak {
+
     font-size: 8px;
+
   }
 
 
   .delete-button {
+
     font-size: 7px;
+
   }
 
 
   .day-cell {
+
     width: 29px;
+
     height: 29px;
 
     border-radius: 7px;
-  }
 
-
-  .day-cell.is-complete span {
-    font-size: 14px;
   }
 
 
   .empty-state {
+
     padding:
       42px 18px
       46px;
-  }
 
-
-  .empty-icon {
-    width: 39px;
-    height: 39px;
-
-    margin-bottom: 13px;
-
-    font-size: 18px;
-  }
-
-
-  .empty-state h3 {
-    font-size: 15px;
-  }
-
-
-  .empty-state p {
-    font-size: 10px;
-  }
-
-
-  footer {
-    margin-top: 20px;
-
-    font-size: 8px;
   }
 
 }
 
 
 /* =========================================================
-   VERY SMALL ANDROID PHONES
-   ========================================================= */
+   VERY SMALL PHONES
+========================================================= */
 
 @media (max-width: 360px) {
 
   .app {
+
     padding-left: 9px;
+
     padding-right: 9px;
+
   }
 
 
   h1 {
+
     font-size: 48px;
+
   }
 
 
   .progress-circle {
+
     width: 57px;
+
     height: 57px;
+
   }
 
 
   .stat-icon {
+
     display: none;
+
   }
 
 
   .stat-card {
+
     padding:
       10px 7px;
+
   }
 
 
   .stat-card strong {
+
     font-size: 15px;
+
   }
 
 
   .stat-card small {
+
     font-size: 6.5px;
+
   }
 
 
   #addHabitBtn {
+
     padding:
       0 10px;
+
   }
 
 
   .habit-matrix {
+
     min-width: 600px;
+
   }
 
 
   .matrix-row {
+
     grid-template-columns:
       minmax(185px, 1fr)
       repeat(7, 51px);
+
   }
 
 }
@@ -1301,7 +1530,7 @@ footer {
 
 /* =========================================================
    REDUCED MOTION
-   ========================================================= */
+========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
 
@@ -1311,10 +1540,9 @@ footer {
 
     scroll-behavior: auto !important;
 
-    transition-duration: 0.01ms !important;
-
-    animation-duration: 0.01ms !important;
-
-  }
+    transition-duration:
+      .01ms !important;
 
   }
+
+   }
