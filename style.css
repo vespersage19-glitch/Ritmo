@@ -1,7 +1,7 @@
 /* =========================================================
-   RITMO — PREMIUM UI
-   PHASE 2
-   Mobile-first • Calm • Premium • Minimal
+   RITMO — PHASE 2
+   Premium Light UI
+   Functionality untouched
 ========================================================= */
 
 * {
@@ -11,35 +11,33 @@
 }
 
 :root {
-  --bg: #f4f5f2;
-  --surface: #ffffff;
-  --surface-soft: #f8f9f7;
+  --bg: #f4f1ea;
+  --surface: #fffdf9;
+  --surface-soft: #f8f5ef;
+  --surface-hover: #f1eee7;
 
-  --border: #e5e8e3;
-  --border-strong: #d9ddd7;
+  --border: #e5dfd4;
+  --border-strong: #d8d0c3;
 
-  --text: #18201c;
-  --text-soft: #59635d;
-  --text-muted: #8a938d;
+  --text: #252822;
+  --text-soft: #666a61;
+  --text-muted: #96988f;
 
-  --accent: #3f8068;
-  --accent-dark: #326b56;
-  --accent-soft: #edf5f0;
+  --green: #557a68;
+  --green-dark: #3f6253;
+  --green-soft: #e8efe9;
 
-  --gold: #b58a43;
-  --gold-soft: #f7f1e6;
+  --gold: #b28b52;
+  --gold-soft: #f3eadb;
 
-  --danger: #b76565;
+  --danger: #a85f5f;
+
+  --shadow:
+    0 10px 30px rgba(50, 45, 35, 0.06);
 
   --radius-sm: 9px;
   --radius-md: 13px;
-  --radius-lg: 18px;
-
-  --shadow-soft:
-    0 4px 20px rgba(25, 35, 30, 0.045);
-
-  --shadow-card:
-    0 8px 30px rgba(25, 35, 30, 0.055);
+  --radius-lg: 20px;
 }
 
 
@@ -50,18 +48,18 @@
 html {
   background: var(--bg);
   color-scheme: light;
-  scroll-behavior: smooth;
 }
 
 body {
   min-height: 100vh;
 
   background:
-    linear-gradient(
-      180deg,
-      #f8f9f7 0%,
-      var(--bg) 100%
-    );
+    radial-gradient(
+      circle at top right,
+      rgba(178, 139, 82, 0.08),
+      transparent 32%
+    ),
+    var(--bg);
 
   color: var(--text);
 
@@ -90,8 +88,8 @@ button {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
 }
 
 
@@ -133,13 +131,13 @@ input:focus-visible {
 .eyebrow {
   margin-bottom: 11px;
 
-  color: var(--accent);
+  color: var(--green);
 
-  font-size: 10px;
+  font-size: 9px;
 
   font-weight: 750;
 
-  letter-spacing: 2.4px;
+  letter-spacing: 2.6px;
 
   line-height: 1;
 }
@@ -147,14 +145,19 @@ input:focus-visible {
 h1 {
   color: var(--text);
 
-  font-size:
-    clamp(54px, 8vw, 78px);
+  font-family:
+    Georgia,
+    "Times New Roman",
+    serif;
 
-  font-weight: 720;
+  font-size:
+    clamp(58px, 8vw, 82px);
+
+  font-weight: 500;
 
   letter-spacing: -4px;
 
-  line-height: 0.9;
+  line-height: 0.88;
 }
 
 .subtitle {
@@ -162,16 +165,14 @@ h1 {
 
   color: var(--text-muted);
 
-  font-size: 14px;
+  font-size: 13px;
 
-  font-weight: 400;
-
-  letter-spacing: 0.05px;
+  letter-spacing: 0.1px;
 }
 
 
 /* =========================================================
-   PROGRESS CIRCLE
+   PROGRESS
 ========================================================= */
 
 .progress-circle {
@@ -185,7 +186,6 @@ h1 {
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
   border-radius: 50%;
@@ -194,7 +194,7 @@ h1 {
 
   border: 1px solid var(--border);
 
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow);
 }
 
 .progress-svg {
@@ -216,28 +216,16 @@ h1 {
 }
 
 .progress-track {
-  stroke: #e8ebe7;
+  stroke: #e7e1d7;
 }
 
 .progress-value {
-  stroke: var(--accent);
+  stroke: var(--green);
 
   stroke-linecap: round;
 
   transition:
-    stroke-dashoffset 300ms ease;
-}
-
-.progress-circle::before {
-  content: "";
-
-  position: absolute;
-
-  inset: 7px;
-
-  border-radius: 50%;
-
-  border: 1px solid #eef0ed;
+    stroke-dashoffset 250ms ease;
 }
 
 .progress-circle span {
@@ -245,11 +233,9 @@ h1 {
 
   color: var(--text);
 
-  font-size: 14px;
+  font-size: 13px;
 
   font-weight: 700;
-
-  letter-spacing: -0.2px;
 }
 
 
@@ -263,7 +249,7 @@ h1 {
   grid-template-columns:
     repeat(3, 1fr);
 
-  gap: 10px;
+  gap: 12px;
 
   margin-bottom: 16px;
 }
@@ -285,61 +271,51 @@ h1 {
 
   border-radius: var(--radius-md);
 
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow);
 
   transition:
-    transform 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
+    transform 150ms ease,
+    border-color 150ms ease;
 }
 
 .stat-card:hover {
   transform: translateY(-1px);
 
   border-color: var(--border-strong);
-
-  box-shadow:
-    0 8px 25px rgba(25, 35, 30, 0.065);
 }
 
 .stat-icon {
-  width: 34px;
-  height: 34px;
+  width: 35px;
+  height: 35px;
 
   flex-shrink: 0;
 
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
-  border-radius: var(--radius-sm);
+  border-radius: 10px;
 
   font-size: 15px;
-
-  font-weight: 700;
 }
 
-.stat-icon.gold,
-.streak-icon {
+.stat-icon.gold {
   color: var(--gold);
 
   background: var(--gold-soft);
 }
 
-.stat-icon.green,
-.done-icon {
-  color: var(--accent);
+.stat-icon.green {
+  color: var(--green);
 
-  background: var(--accent-soft);
+  background: var(--green-soft);
 }
 
-.stat-icon.neutral,
-.habit-icon {
+.stat-icon.neutral {
   color: var(--text-soft);
 
-  background: #f1f3f0;
+  background: #efede8;
 }
 
 .stat-card strong {
@@ -364,8 +340,6 @@ h1 {
   font-size: 10px;
 
   font-weight: 550;
-
-  letter-spacing: 0.15px;
 }
 
 
@@ -376,9 +350,9 @@ h1 {
 .add-section {
   display: flex;
 
-  gap: 8px;
+  gap: 9px;
 
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 #habitInput {
@@ -388,7 +362,7 @@ h1 {
   height: 52px;
 
   padding:
-    0 16px;
+    0 17px;
 
   color: var(--text);
 
@@ -400,30 +374,23 @@ h1 {
 
   outline: none;
 
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow);
 
   transition:
     border-color 160ms ease,
-    box-shadow 160ms ease,
-    background 160ms ease;
+    box-shadow 160ms ease;
 }
 
 #habitInput::placeholder {
-  color: #a0a8a3;
-}
-
-#habitInput:hover {
-  border-color: var(--border-strong);
+  color: #aaa79f;
 }
 
 #habitInput:focus {
-  background: #ffffff;
-
-  border-color: var(--accent);
+  border-color: var(--green);
 
   box-shadow:
-    0 0 0 3px var(--accent-soft),
-    var(--shadow-soft);
+    0 0 0 3px
+    rgba(85, 122, 104, 0.10);
 }
 
 #addHabitBtn {
@@ -438,32 +405,23 @@ h1 {
 
   border-radius: var(--radius-md);
 
-  background: var(--accent);
+  background: var(--green);
 
-  color: #ffffff;
+  color: white;
 
   font-size: 12px;
 
   font-weight: 700;
 
-  letter-spacing: 0.05px;
-
   cursor: pointer;
 
-  box-shadow:
-    0 5px 14px rgba(63, 128, 104, 0.16);
-
   transition:
-    background 160ms ease,
-    transform 100ms ease,
-    box-shadow 160ms ease;
+    background 150ms ease,
+    transform 100ms ease;
 }
 
 #addHabitBtn:hover {
-  background: var(--accent-dark);
-
-  box-shadow:
-    0 7px 18px rgba(63, 128, 104, 0.20);
+  background: var(--green-dark);
 }
 
 #addHabitBtn:active {
@@ -472,12 +430,10 @@ h1 {
 
 
 /* =========================================================
-   TRACKER CARD
+   TRACKER
 ========================================================= */
 
 .tracker-card {
-  position: relative;
-
   overflow: hidden;
 
   background: var(--surface);
@@ -486,7 +442,7 @@ h1 {
 
   border-radius: var(--radius-lg);
 
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--shadow);
 }
 
 
@@ -505,14 +461,14 @@ h1 {
   gap: 20px;
 
   padding:
-    24px 22px
+    25px 22px
     16px;
 }
 
 .section-label {
   margin-bottom: 7px;
 
-  color: var(--accent);
+  color: var(--green);
 
   font-size: 9px;
 
@@ -531,7 +487,7 @@ h1 {
 
   font-weight: 700;
 
-  letter-spacing: -0.6px;
+  letter-spacing: -0.5px;
 }
 
 .current-date,
@@ -539,8 +495,6 @@ h1 {
   color: var(--text-muted);
 
   font-size: 10px;
-
-  font-weight: 500;
 
   white-space: nowrap;
 }
@@ -557,11 +511,11 @@ h1 {
 
   justify-content: center;
 
-  gap: 18px;
+  gap: 16px;
 
   padding:
-    1px 22px
-    13px;
+    2px 22px
+    14px;
 }
 
 .week-navigation strong {
@@ -583,12 +537,11 @@ h1 {
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
   border: 1px solid var(--border);
 
-  border-radius: var(--radius-sm);
+  border-radius: 9px;
 
   background: var(--surface-soft);
 
@@ -596,34 +549,24 @@ h1 {
 
   font-size: 20px;
 
-  line-height: 1;
-
   cursor: pointer;
 
   transition:
     background 150ms ease,
     color 150ms ease,
-    border-color 150ms ease,
-    transform 100ms ease;
+    border-color 150ms ease;
 }
 
-.week-nav-button:hover:not(:disabled) {
-  background: var(--accent-soft);
+.week-nav-button:hover {
+  background: var(--surface-hover);
 
-  border-color:
-    rgba(63, 128, 104, 0.25);
+  color: var(--text);
 
-  color: var(--accent);
-}
-
-.week-nav-button:active:not(:disabled) {
-  transform: scale(0.94);
+  border-color: var(--border-strong);
 }
 
 .week-nav-button:disabled {
-  opacity: 0.38;
-
-  cursor: default;
+  opacity: 0.35;
 }
 
 
@@ -646,9 +589,9 @@ h1 {
 
   border-radius: 999px;
 
-  background: transparent;
+  background: var(--surface-soft);
 
-  color: var(--text-muted);
+  color: var(--text-soft);
 
   font-size: 10px;
 
@@ -664,24 +607,24 @@ h1 {
 
 .today-button:hover:not(:disabled),
 .current-week-button:hover:not(:disabled) {
-  color: var(--accent);
+  color: var(--green);
 
   border-color:
-    rgba(63, 128, 104, 0.30);
+    rgba(85, 122, 104, 0.35);
 
-  background: var(--accent-soft);
+  background: var(--green-soft);
 }
 
 .today-button:disabled,
 .current-week-button:disabled {
-  opacity: 0.38;
+  opacity: 0.35;
 
   cursor: default;
 }
 
 
 /* =========================================================
-   MATRIX SCROLL
+   MATRIX
 ========================================================= */
 
 .matrix-scroll {
@@ -692,16 +635,7 @@ h1 {
   -webkit-overflow-scrolling: touch;
 
   scrollbar-width: thin;
-
-  scrollbar-color:
-    #d8ddd8
-    transparent;
 }
-
-
-/* =========================================================
-   MATRIX
-========================================================= */
 
 .habit-matrix {
   min-width: 670px;
@@ -724,8 +658,7 @@ h1 {
 .matrix-header {
   min-height: 55px;
 
-  background:
-    #fafbf9;
+  background: var(--surface-soft);
 }
 
 .habit-column {
@@ -749,7 +682,7 @@ h1 {
 
 
 /* =========================================================
-   DAY HEADERS
+   DAYS
 ========================================================= */
 
 .day-column {
@@ -764,14 +697,10 @@ h1 {
   justify-content: center;
 
   gap: 3px;
-
-  transition:
-    background 150ms ease;
 }
 
 .day-column.is-today {
-  background:
-    var(--accent-soft);
+  background: var(--green-soft);
 }
 
 .day-name {
@@ -779,7 +708,7 @@ h1 {
 
   font-size: 8px;
 
-  font-weight: 750;
+  font-weight: 700;
 
   letter-spacing: 0.6px;
 
@@ -796,12 +725,12 @@ h1 {
 
 .day-column.is-today .day-name,
 .day-column.is-today .day-date {
-  color: var(--accent);
+  color: var(--green);
 }
 
 
 /* =========================================================
-   HABIT INFORMATION
+   HABITS
 ========================================================= */
 
 .habit-info {
@@ -845,15 +774,13 @@ h1 {
 
   background: transparent;
 
-  color: #9aa19d;
+  color: #a09e96;
 
   font-size: 8px;
 
   font-weight: 600;
 
   cursor: pointer;
-
-  transition: color 150ms ease;
 }
 
 .delete-button:hover {
@@ -874,31 +801,28 @@ h1 {
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
-  border: 1px solid #dce1dc;
+  border: 1px solid var(--border-strong);
 
-  border-radius: 8px;
+  border-radius: 9px;
 
-  background: #ffffff;
+  background: transparent;
 
-  color: #ffffff;
+  color: white;
 
   cursor: pointer;
 
   transition:
     background 140ms ease,
     border-color 140ms ease,
-    transform 100ms ease,
-    box-shadow 140ms ease;
+    transform 100ms ease;
 }
 
 .day-cell:hover:not(:disabled) {
-  border-color:
-    rgba(63, 128, 104, 0.55);
+  border-color: var(--green);
 
-  background: var(--accent-soft);
+  background: var(--green-soft);
 }
 
 .day-cell:active:not(:disabled) {
@@ -906,26 +830,19 @@ h1 {
 }
 
 .day-cell.is-complete {
-  border-color: var(--accent);
+  border-color: var(--green);
 
-  background: var(--accent);
-
-  box-shadow:
-    0 3px 9px rgba(63, 128, 104, 0.18);
+  background: var(--green);
 }
 
 .day-cell.is-complete span {
   font-size: 15px;
 
   font-weight: 900;
-
-  line-height: 1;
 }
 
 .day-cell.is-future {
-  opacity: 0.35;
-
-  background: #f2f4f1;
+  opacity: 0.28;
 
   cursor: not-allowed;
 }
@@ -947,8 +864,8 @@ h1 {
 
 .empty-mark,
 .empty-icon {
-  width: 42px;
-  height: 42px;
+  width: 43px;
+  height: 43px;
 
   margin:
     0 auto
@@ -957,7 +874,6 @@ h1 {
   display: flex;
 
   align-items: center;
-
   justify-content: center;
 
   border: 1px solid var(--border);
@@ -966,14 +882,9 @@ h1 {
 
   background: var(--surface-soft);
 
-  color: var(--accent);
+  color: var(--green);
 
   font-size: 20px;
-
-  font-weight: 400;
-
-  box-shadow:
-    0 3px 12px rgba(25, 35, 30, 0.035);
 }
 
 .empty-state h3 {
@@ -987,7 +898,7 @@ h1 {
 }
 
 .empty-state p {
-  max-width: 300px;
+  max-width: 310px;
 
   margin: 0 auto;
 
@@ -1006,7 +917,7 @@ h1 {
 footer {
   margin-top: 25px;
 
-  color: #a0a7a2;
+  color: #aaa79f;
 
   text-align: center;
 
@@ -1030,31 +941,23 @@ footer {
       44px;
   }
 
-
-  /* HEADER */
-
   .header {
     gap: 15px;
 
     margin-bottom: 25px;
   }
 
-
   .eyebrow {
-    margin-bottom: 9px;
-
     font-size: 8px;
 
     letter-spacing: 1.8px;
   }
 
-
   h1 {
     font-size: 52px;
 
-    letter-spacing: -3.4px;
+    letter-spacing: -3px;
   }
-
 
   .subtitle {
     margin-top: 10px;
@@ -1062,17 +965,10 @@ footer {
     font-size: 11px;
   }
 
-
   .progress-circle {
-    width: 63px;
-    height: 63px;
+    width: 62px;
+    height: 62px;
   }
-
-
-  .progress-circle::before {
-    inset: 5px;
-  }
-
 
   .progress-circle span {
     font-size: 11px;
@@ -1087,38 +983,32 @@ footer {
     margin-bottom: 10px;
   }
 
-
   .stat-card {
     gap: 7px;
 
     padding:
       11px 8px;
 
-    border-radius: 10px;
+    border-radius: 11px;
   }
-
 
   .stat-icon {
     width: 27px;
     height: 27px;
 
-    border-radius: 7px;
+    border-radius: 8px;
 
     font-size: 12px;
   }
-
 
   .stat-card strong {
     font-size: 16px;
   }
 
-
   .stat-card small {
     margin-top: 4px;
 
     font-size: 7px;
-
-    letter-spacing: 0;
   }
 
 
@@ -1129,7 +1019,6 @@ footer {
 
     margin-bottom: 13px;
   }
-
 
   #habitInput {
     height: 47px;
@@ -1142,12 +1031,11 @@ footer {
     font-size: 12px;
   }
 
-
   #addHabitBtn {
     height: 47px;
 
     padding:
-      0 14px;
+      0 13px;
 
     border-radius: 10px;
 
@@ -1158,9 +1046,8 @@ footer {
   /* TRACKER */
 
   .tracker-card {
-    border-radius: 13px;
+    border-radius: 14px;
   }
-
 
   .tracker-header,
   .tracker-top {
@@ -1171,38 +1058,29 @@ footer {
       13px;
   }
 
-
   .section-label {
-    margin-bottom: 6px;
-
     font-size: 8px;
 
     letter-spacing: 1.6px;
   }
-
 
   .tracker-header h2,
   .tracker-top h2 {
     font-size: 19px;
   }
 
-
   .current-date,
   .today-label {
     font-size: 8px;
   }
 
-
-  /* WEEK */
-
   .week-navigation {
-    gap: 10px;
+    gap: 9px;
 
     padding:
       1px 14px
       10px;
   }
-
 
   .week-navigation strong {
     width: 145px;
@@ -1210,14 +1088,12 @@ footer {
     font-size: 11px;
   }
 
-
   .week-nav-button {
     width: 30px;
     height: 30px;
 
     font-size: 19px;
   }
-
 
   .today-button,
   .current-week-button {
@@ -1236,7 +1112,6 @@ footer {
     min-width: 620px;
   }
 
-
   .matrix-row {
     grid-template-columns:
       minmax(195px, 1fr)
@@ -1245,97 +1120,53 @@ footer {
     min-height: 65px;
   }
 
-
   .matrix-header {
     min-height: 53px;
   }
-
 
   .habit-column {
     padding:
       9px 11px;
   }
 
-
-  .matrix-heading {
-    font-size: 8px;
-  }
-
-
   .day-name {
     font-size: 7px;
   }
-
 
   .day-date {
     font-size: 10px;
   }
 
-
   .habit-name {
     font-size: 12px;
   }
-
 
   .habit-streak {
     font-size: 8px;
   }
 
-
   .delete-button {
     font-size: 7px;
   }
-
 
   .day-cell {
     width: 29px;
     height: 29px;
 
-    border-radius: 7px;
+    border-radius: 8px;
   }
-
-
-  .day-cell.is-complete span {
-    font-size: 14px;
-  }
-
-
-  /* EMPTY */
 
   .empty-state {
     padding:
-      43px 18px
-      47px;
+      42px 18px
+      46px;
   }
-
-
-  .empty-mark,
-  .empty-icon {
-    width: 39px;
-    height: 39px;
-
-    margin-bottom: 13px;
-
-    font-size: 18px;
-  }
-
-
-  .empty-state h3 {
-    font-size: 15px;
-  }
-
-
-  .empty-state p {
-    font-size: 10px;
-  }
-
 
   footer {
     margin-top: 20px;
 
     font-size: 8px;
   }
-
 }
 
 
@@ -1350,56 +1181,46 @@ footer {
     padding-right: 9px;
   }
 
-
   h1 {
     font-size: 48px;
   }
-
 
   .progress-circle {
     width: 57px;
     height: 57px;
   }
 
-
   .stat-icon {
     display: none;
   }
-
 
   .stat-card {
     padding:
       10px 7px;
   }
 
-
   .stat-card strong {
     font-size: 15px;
   }
 
-
   .stat-card small {
     font-size: 6.5px;
   }
-
 
   #addHabitBtn {
     padding:
       0 10px;
   }
 
-
   .habit-matrix {
     min-width: 600px;
   }
-
 
   .matrix-row {
     grid-template-columns:
       minmax(185px, 1fr)
       repeat(7, 51px);
   }
-
 }
 
 
@@ -1412,12 +1233,10 @@ footer {
   *,
   *::before,
   *::after {
-
     scroll-behavior: auto !important;
 
     transition-duration: 0.01ms !important;
 
     animation-duration: 0.01ms !important;
   }
-
    }
