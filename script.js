@@ -1,11 +1,13 @@
 /* =========================================================
-   RITMO — COMPLETE SCRIPT
-   Weekly Sunday → Saturday
-   Permanent history
-   Permanent Best Streak
+   RITMO — PHASE 3
+   Premium Habit Tracker
+   Stable Completion + Streaks + Navigation
+   Edit + Undo Delete + History
+   Local Data Protection
 ========================================================= */
 
 const STORAGE_KEY = "ritmo-v3-data";
+const BACKUP_KEY = "ritmo-v3-backup";
 
 const habitInput = document.getElementById("habitInput");
 const addHabitBtn = document.getElementById("addHabitBtn");
@@ -23,9 +25,14 @@ const bestStreak = document.getElementById("bestStreak");
 const weekLabel = document.getElementById("weekLabel");
 const dateElement = document.getElementById("date");
 
-const previousWeekBtn = document.getElementById("previousWeekBtn");
-const nextWeekBtn = document.getElementById("nextWeekBtn");
-const todayBtn = document.getElementById("todayBtn");
+const previousWeekBtn =
+  document.getElementById("previousWeekBtn");
+
+const nextWeekBtn =
+  document.getElementById("nextWeekBtn");
+
+const todayBtn =
+  document.getElementById("todayBtn");
 
 const DAY_NAMES = [
   "Sun",
@@ -37,8 +44,24 @@ const DAY_NAMES = [
   "Sat"
 ];
 
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
+
 let viewedWeekStart;
 let data;
+let deleteUndoTimer = null;
 
 
 /* =========================================================
@@ -157,15 +180,13 @@ function formatWeekRange(start) {
 
 
 /* =========================================================
-   DATA
+   DATA SAFETY
 ========================================================= */
 
 function createEmptyData() {
   return {
     version: 3,
-
     habits: [],
-
     stats: {
       bestStreak: 0
     }
@@ -173,10 +194,20 @@ function createEmptyData() {
 }
 
 
+function createHabitId() {
+  return (
+    `${Date.now()}-` +
+    `${Math.random().toString(36).slice(2, 10)}`
+  );
+}
+
+
 function normalizeCompletions(completions) {
+
   if (
     !completions ||
-    typeof completions !== "object"
+    typeof completions !== "object" ||
+    Array.isArray(completions)
   ) {
     return {};
   }
@@ -201,11 +232,14 @@ function normalizeCompletions(completions) {
 
 
 function normalizeData(raw) {
-  const clean = createEmptyData();
+
+  const clean =
+    createEmptyData();
 
   if (
     !raw ||
-    typeof raw !== "object"
+    typeof raw !== "object" ||
+    Array.isArray(raw)
   ) {
     return clean;
   }
@@ -214,7 +248,6 @@ function normalizeData(raw) {
 
     clean.habits =
       raw.habits
-
         .filter(
           habit =>
             habit &&
@@ -223,25 +256,25 @@ function normalizeData(raw) {
               habit.name || ""
             ).trim()
         )
-
         .map(
           habit => ({
             id:
               String(
                 habit.id ||
-                `${Date.now()}-${Math.random()}`
+                createHabitId()
               ),
 
             name:
               String(
-                habit.name
+                habit.name || ""
               )
               .trim()
               .slice(0, 50),
 
             createdAt:
-              habit.createdAt ||
-              new Date().toISOString(),
+              typeof habit.createdAt === "string"
+                ? habit.createdAt
+                : new Date().toISOString(),
 
             completions:
               normalizeCompletions(
@@ -249,6 +282,7 @@ function normalizeData(raw) {
               )
           })
         );
+
   }
 
   const savedBest =
@@ -261,8 +295,10 @@ function normalizeData(raw) {
     Number.isFinite(savedBest) &&
     savedBest >= 0
   ) {
+
     clean.stats.bestStreak =
       Math.floor(savedBest);
+
   }
 
   return clean;
@@ -270,12 +306,13 @@ function normalizeData(raw) {
 
 
 /* =========================================================
-   LOAD OLD DATA
+   LEGACY MIGRATION
 ========================================================= */
 
 function migrateLegacyData() {
 
-  const result = createEmptyData();
+  const result =
+    createEmptyData();
 
   try {
 
@@ -315,9 +352,11 @@ function migrateLegacyData() {
             habit.lastCompletedDate || ""
           )
         ) {
+
           completions[
             habit.lastCompletedDate
           ] = true;
+
         }
 
         result.habits.push({
@@ -353,7 +392,6 @@ function migrateLegacyData() {
     );
 
   }
-
   catch (error) {
 
     console.error(
@@ -389,7 +427,6 @@ function loadData() {
     }
 
   }
-
   catch (error) {
 
     console.error(
@@ -407,13 +444,36 @@ function saveData() {
 
   try {
 
+    const serialized =
+      JSON.stringify(data);
+
+    /*
+      Keep a recovery copy before replacing
+      the main record.
+    */
+
+    const previous =
+      localStorage.getItem(
+        STORAGE_KEY
+      );
+
+    if (previous) {
+
+      localStorage.setItem(
+        BACKUP_KEY,
+        previous
+      );
+
+    }
+
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify(data)
+      serialized
     );
 
-  }
+    return true;
 
+  }
   catch (error) {
 
     console.error(
@@ -421,6 +481,7 @@ function saveData() {
       error
     );
 
+    return false;
   }
 }
 
@@ -498,7 +559,8 @@ function calculateCurrentStreak(habit) {
 
   let streak = 0;
 
-  let cursor = new Date();
+  let cursor =
+    new Date();
 
   while (
     habit.completions[
@@ -513,9 +575,16 @@ function calculateCurrentStreak(habit) {
         cursor,
         -1
       );
+
   }
 
   return streak;
+}
+
+
+function getLongestCurrentOrRecentStreak(habit) {
+
+  return calculateBestStreak(habit);
 }
 
 
@@ -545,7 +614,9 @@ function addHabit() {
     habitInput.value.trim();
 
   if (!name) {
+
     habitInput.focus();
+
     return;
   }
 
@@ -559,6 +630,7 @@ function addHabit() {
   if (exists) {
 
     habitInput.focus();
+
     habitInput.select();
 
     return;
@@ -567,9 +639,7 @@ function addHabit() {
   data.habits.push({
 
     id:
-      `${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2, 8)}`,
+      createHabitId(),
 
     name:
       name.slice(0, 50),
@@ -592,12 +662,70 @@ function addHabit() {
 
 
 /* =========================================================
-   TOGGLE
+   EDIT HABIT
+========================================================= */
+
+function editHabit(habitId) {
+
+  const habit =
+    data.habits.find(
+      item =>
+        item.id === habitId
+    );
+
+  if (!habit) {
+    return;
+  }
+
+  const updatedName =
+    window.prompt(
+      "Edit habit name:",
+      habit.name
+    );
+
+  if (updatedName === null) {
+    return;
+  }
+
+  const name =
+    updatedName.trim();
+
+  if (!name) {
+    return;
+  }
+
+  const duplicate =
+    data.habits.some(
+      item =>
+        item.id !== habitId &&
+        item.name.toLowerCase() ===
+        name.toLowerCase()
+    );
+
+  if (duplicate) {
+    window.alert(
+      "A habit with this name already exists."
+    );
+    return;
+  }
+
+  habit.name =
+    name.slice(0, 50);
+
+  saveData();
+
+  render();
+}
+
+
+/* =========================================================
+   COMPLETION SYSTEM
 ========================================================= */
 
 function toggleCompletion(
   habitId,
-  dateKey
+  dateKey,
+  button
 ) {
 
   const habit =
@@ -617,16 +745,23 @@ function toggleCompletion(
     return;
   }
 
-  if (
-    habit.completions[dateKey] === true
-  ) {
+  const wasCompleted =
+    habit.completions[dateKey] === true;
 
-    delete habit.completions[dateKey];
+  if (wasCompleted) {
+
+    delete habit.completions[
+      dateKey
+    ];
 
   }
   else {
 
-    habit.completions[dateKey] = true;
+    habit.completions[
+      dateKey
+    ] = true;
+
+    playCompletionAnimation(button);
 
   }
 
@@ -638,45 +773,199 @@ function toggleCompletion(
 }
 
 
+function playCompletionAnimation(button) {
+
+  if (!button) {
+    return;
+  }
+
+  button.classList.remove(
+    "completion-pop"
+  );
+
+  void button.offsetWidth;
+
+  button.classList.add(
+    "completion-pop"
+  );
+
+  setTimeout(
+    () => {
+
+      button.classList.remove(
+        "completion-pop"
+      );
+
+    },
+    450
+  );
+}
+
+
 /* =========================================================
-   DELETE
+   SAFE DELETE + UNDO
 ========================================================= */
 
 function deleteHabit(habitId) {
 
-  const habit =
-    data.habits.find(
+  const index =
+    data.habits.findIndex(
       item =>
         item.id === habitId
     );
 
-  if (!habit) {
+  if (index === -1) {
     return;
   }
 
+  const habit =
+    data.habits[index];
+
   const confirmed =
     window.confirm(
-      `Delete "${habit.name}"? Your Best Streak will be kept.`
+      `Delete "${habit.name}"?\n\nYou can undo this deletion for a few seconds.`
     );
 
   if (!confirmed) {
     return;
   }
 
-  data.habits =
-    data.habits.filter(
-      item =>
-        item.id !== habitId
-    );
+  data.habits.splice(
+    index,
+    1
+  );
 
   saveData();
 
   render();
+
+  showUndoDelete(
+    habit,
+    index
+  );
+}
+
+
+function showUndoDelete(
+  habit,
+  originalIndex
+) {
+
+  clearTimeout(
+    deleteUndoTimer
+  );
+
+  let toast =
+    document.getElementById(
+      "ritmoUndoToast"
+    );
+
+  if (!toast) {
+
+    toast =
+      document.createElement(
+        "div"
+      );
+
+    toast.id =
+      "ritmoUndoToast";
+
+    toast.className =
+      "ritmo-undo-toast";
+
+    document.body.appendChild(
+      toast
+    );
+
+  }
+
+  toast.innerHTML = "";
+
+  const message =
+    document.createElement(
+      "span"
+    );
+
+  message.textContent =
+    `"${habit.name}" deleted`;
+
+  const undoButton =
+    document.createElement(
+      "button"
+    );
+
+  undoButton.type =
+    "button";
+
+  undoButton.textContent =
+    "Undo";
+
+  undoButton.addEventListener(
+    "click",
+    () => {
+
+      data.habits.splice(
+        Math.min(
+          originalIndex,
+          data.habits.length
+        ),
+        0,
+        habit
+      );
+
+      updatePermanentBestStreak();
+
+      saveData();
+
+      render();
+
+      toast.remove();
+
+      clearTimeout(
+        deleteUndoTimer
+      );
+
+    }
+  );
+
+  toast.append(
+    message,
+    undoButton
+  );
+
+  requestAnimationFrame(
+    () => {
+      toast.classList.add(
+        "is-visible"
+      );
+    }
+  );
+
+  deleteUndoTimer =
+    setTimeout(
+      () => {
+
+        toast.classList.remove(
+          "is-visible"
+        );
+
+        setTimeout(
+          () => {
+            if (toast.isConnected) {
+              toast.remove();
+            }
+          },
+          250
+        );
+
+      },
+      5000
+    );
 }
 
 
 /* =========================================================
-   WEEK
+   WEEK NAVIGATION
 ========================================================= */
 
 function getWeekDates() {
@@ -787,26 +1076,34 @@ function createDayButton(
     isFutureDate(date);
 
   const button =
-    document.createElement("button");
+    document.createElement(
+      "button"
+    );
 
-  button.type = "button";
+  button.type =
+    "button";
 
   button.className =
     "day-cell";
 
   if (completed) {
+
     button.classList.add(
       "is-complete"
     );
+
   }
 
   if (future) {
+
     button.classList.add(
       "is-future"
     );
+
   }
 
-  button.disabled = future;
+  button.disabled =
+    future;
 
   button.setAttribute(
     "aria-label",
@@ -822,16 +1119,25 @@ function createDayButton(
   if (completed) {
 
     const tick =
-      document.createElement("span");
+      document.createElement(
+        "span"
+      );
 
-    tick.textContent = "✓";
+    tick.textContent =
+      "✓";
 
     tick.setAttribute(
       "aria-hidden",
       "true"
     );
 
-    button.appendChild(tick);
+    tick.className =
+      "completion-tick";
+
+    button.appendChild(
+      tick
+    );
+
   }
 
   button.addEventListener(
@@ -840,7 +1146,8 @@ function createDayButton(
 
       toggleCompletion(
         habit.id,
-        key
+        key,
+        button
       );
 
     }
@@ -860,24 +1167,30 @@ function renderMatrix(dates) {
 
   if (data.habits.length === 0) {
 
-    emptyState.hidden = false;
+    emptyState.hidden =
+      false;
 
     return;
   }
 
-  emptyState.hidden = true;
+  emptyState.hidden =
+    true;
 
 
   /* HEADER */
 
   const header =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   header.className =
     "matrix-row matrix-header";
 
   const habitHeading =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
   habitHeading.className =
     "habit-column matrix-heading";
@@ -894,7 +1207,9 @@ function renderMatrix(dates) {
     date => {
 
       const day =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       day.className =
         "day-column";
@@ -913,7 +1228,9 @@ function renderMatrix(dates) {
       }
 
       const name =
-        document.createElement("span");
+        document.createElement(
+          "span"
+        );
 
       name.className =
         "day-name";
@@ -924,7 +1241,9 @@ function renderMatrix(dates) {
         ];
 
       const number =
-        document.createElement("span");
+        document.createElement(
+          "span"
+        );
 
       number.className =
         "day-date";
@@ -937,12 +1256,16 @@ function renderMatrix(dates) {
         number
       );
 
-      header.appendChild(day);
+      header.appendChild(
+        day
+      );
 
     }
   );
 
-  habitMatrix.appendChild(header);
+  habitMatrix.appendChild(
+    header
+  );
 
 
   /* HABITS */
@@ -951,25 +1274,36 @@ function renderMatrix(dates) {
     habit => {
 
       const row =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       row.className =
         "matrix-row habit-row";
 
+
       const habitColumn =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       habitColumn.className =
         "habit-column";
 
+
       const info =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
       info.className =
         "habit-info";
 
+
       const name =
-        document.createElement("span");
+        document.createElement(
+          "span"
+        );
 
       name.className =
         "habit-name";
@@ -977,21 +1311,49 @@ function renderMatrix(dates) {
       name.textContent =
         habit.name;
 
-      const streak =
-        document.createElement("span");
-
-      streak.className =
-        "habit-streak";
 
       const currentStreak =
         calculateCurrentStreak(
           habit
         );
 
-      streak.textContent =
-        currentStreak > 0
-          ? `${currentStreak} day streak`
-          : "No active streak";
+      const best =
+        getLongestCurrentOrRecentStreak(
+          habit
+        );
+
+
+      const streak =
+        document.createElement(
+          "span"
+        );
+
+      streak.className =
+        "habit-streak";
+
+      if (currentStreak > 0) {
+
+        streak.innerHTML =
+          `<strong>${currentStreak}</strong> day${
+            currentStreak === 1
+              ? ""
+              : "s"
+          } active`;
+
+      }
+      else if (best > 0) {
+
+        streak.innerHTML =
+          `<strong>${best}</strong> best`;
+
+      }
+      else {
+
+        streak.textContent =
+          "Start your streak";
+
+      }
+
 
       info.append(
         name,
@@ -999,219 +1361,24 @@ function renderMatrix(dates) {
       );
 
 
-      const deleteButton =
-        document.createElement("button");
-
-      deleteButton.type = "button";
-
-      deleteButton.className =
-        "delete-button";
-
-      deleteButton.textContent =
-        "Delete";
-
-      deleteButton.addEventListener(
-        "click",
-        () => {
-
-          deleteHabit(
-            habit.id
-          );
-
-        }
-      );
-
-
-      habitColumn.append(
-        info,
-        deleteButton
-      );
-
-      row.appendChild(
-        habitColumn
-      );
-
-
-      dates.forEach(
-        date => {
-
-          row.appendChild(
-            createDayButton(
-              habit,
-              date
-            )
-          );
-
-        }
-      );
-
-
-      habitMatrix.appendChild(row);
-
-    }
-  );
-}
-
-
-/* =========================================================
-   STATS
-========================================================= */
-
-function updateStats() {
-
-  const todayKey =
-    getDateKey();
-
-  const total =
-    data.habits.length;
-
-  const completed =
-    data.habits.filter(
-      habit =>
-        habit.completions[
-          todayKey
-        ] === true
-    ).length;
-
-  const percentage =
-    total === 0
-      ? 0
-      : Math.round(
-          (
-            completed /
-            total
-          ) * 100
+      const actions =
+        document.createElement(
+          "div"
         );
 
-  totalHabits.textContent =
-    total;
-
-  completedCount.textContent =
-    completed;
-
-  progressPercent.textContent =
-    `${percentage}%`;
-
-  bestStreak.textContent =
-    data.stats.bestStreak;
+      actions.className =
+        "habit-actions";
 
 
-  if (progressRing) {
+      const editButton =
+        document.createElement(
+          "button"
+        );
 
-    const radius = 43;
+      editButton.type =
+        "button";
 
-    const circumference =
-      2 *
-      Math.PI *
-      radius;
+      editButton.className =
+        "edit-button";
 
-    progressRing.style.strokeDasharray =
-      circumference;
-
-    progressRing.style.strokeDashoffset =
-      circumference -
-      (
-        percentage /
-        100
-      ) *
-      circumference;
-  }
-}
-
-
-/* =========================================================
-   RENDER
-========================================================= */
-
-function render() {
-
-  renderWeekHeader();
-
-  renderMatrix(
-    getWeekDates()
-  );
-
-  updateStats();
-}
-
-
-/* =========================================================
-   EVENTS
-========================================================= */
-
-if (addHabitBtn) {
-
-  addHabitBtn.addEventListener(
-    "click",
-    addHabit
-  );
-
-}
-
-
-if (habitInput) {
-
-  habitInput.addEventListener(
-    "keydown",
-    event => {
-
-      if (event.key === "Enter") {
-
-        event.preventDefault();
-
-        addHabit();
-
-      }
-
-    }
-  );
-
-}
-
-
-if (previousWeekBtn) {
-
-  previousWeekBtn.addEventListener(
-    "click",
-    goToPreviousWeek
-  );
-
-}
-
-
-if (nextWeekBtn) {
-
-  nextWeekBtn.addEventListener(
-    "click",
-    goToNextWeek
-  );
-
-}
-
-
-if (todayBtn) {
-
-  todayBtn.addEventListener(
-    "click",
-    goToToday
-  );
-
-}
-
-
-/* =========================================================
-   START RITMO
-========================================================= */
-
-data = loadData();
-
-updatePermanentBestStreak();
-
-viewedWeekStart =
-  startOfWeek(
-    new Date()
-  );
-
-saveData();
-
-render();
+      editButton.textConte
