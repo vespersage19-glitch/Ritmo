@@ -1,10 +1,15 @@
 /* =========================================================
    RITMO — PHASE 3
-   Premium Habit Tracker
-   Stable Completion + Streaks + Navigation
-   Edit + Undo Delete + History
-   Local Data Protection
+   Stable Completion
+   Streaks
+   Week Navigation
+   Edit Habit
+   Safe Delete + Undo
+   Progress & History
+   Local Recovery
 ========================================================= */
+
+"use strict";
 
 const STORAGE_KEY = "ritmo-v3-data";
 const BACKUP_KEY = "ritmo-v3-backup";
@@ -25,35 +30,18 @@ const bestStreak = document.getElementById("bestStreak");
 const weekLabel = document.getElementById("weekLabel");
 const dateElement = document.getElementById("date");
 
-const previousWeekBtn =
-  document.getElementById("previousWeekBtn");
+const previousWeekBtn = document.getElementById("previousWeekBtn");
+const nextWeekBtn = document.getElementById("nextWeekBtn");
+const todayBtn = document.getElementById("todayBtn");
 
-const nextWeekBtn =
-  document.getElementById("nextWeekBtn");
+const historyBtn = document.getElementById("historyBtn");
+const historyPanel = document.getElementById("historyPanel");
+const historyCloseBtn = document.getElementById("historyCloseBtn");
 
-const todayBtn =
-  document.getElementById("todayBtn");
-
-const historyBtn =
-  document.getElementById("historyBtn");
-
-const historyPanel =
-  document.getElementById("historyPanel");
-
-const historyCloseBtn =
-  document.getElementById("historyCloseBtn");
-
-const historyList =
-  document.getElementById("historyList");
-
-const historyTotalHabits =
-  document.getElementById("historyTotalHabits");
-
-const historyBestStreak =
-  document.getElementById("historyBestStreak");
-
-const historyTotalCompletions =
-  document.getElementById("historyTotalCompletions");
+const historyList = document.getElementById("historyList");
+const historyTotalHabits = document.getElementById("historyTotalHabits");
+const historyBestStreak = document.getElementById("historyBestStreak");
+const historyTotalCompletions = document.getElementById("historyTotalCompletions");
 
 const DAY_NAMES = [
   "Sun",
@@ -65,60 +53,40 @@ const DAY_NAMES = [
   "Sat"
 ];
 
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec"
-];
-
 const PROGRESS_RADIUS = 43;
 const PROGRESS_CIRCUMFERENCE =
   2 * Math.PI * PROGRESS_RADIUS;
 
-let viewedWeekStart;
-let data;
+let viewedWeekStart = startOfWeek(new Date());
+let data = loadData();
 let deleteUndoTimer = null;
 
 
 /* =========================================================
-   DATE HELPERS
+   DATE
 ========================================================= */
 
 function pad(value) {
   return String(value).padStart(2, "0");
 }
 
-
 function getDateKey(date = new Date()) {
-  return (
-    date.getFullYear() +
-    "-" +
-    pad(date.getMonth() + 1) +
-    "-" +
+  return [
+    date.getFullYear(),
+    pad(date.getMonth() + 1),
     pad(date.getDate())
-  );
+  ].join("-");
 }
-
 
 function parseDateKey(key) {
-  const parts = key.split("-").map(Number);
+  const [year, month, day] = key.split("-").map(Number);
 
   return new Date(
-    parts[0],
-    parts[1] - 1,
-    parts[2]
+    year,
+    month - 1,
+    day
   );
 }
-
 
 function startOfWeek(date) {
   const result = new Date(
@@ -134,7 +102,6 @@ function startOfWeek(date) {
   return result;
 }
 
-
 function addDays(date, amount) {
   const result = new Date(date);
 
@@ -145,14 +112,9 @@ function addDays(date, amount) {
   return result;
 }
 
-
 function isSameDate(first, second) {
-  return (
-    getDateKey(first) ===
-    getDateKey(second)
-  );
+  return getDateKey(first) === getDateKey(second);
 }
-
 
 function isFutureDate(date) {
   const today = new Date();
@@ -166,69 +128,58 @@ function isFutureDate(date) {
   return target > today;
 }
 
-
 function formatDate(date) {
-  return date.toLocaleDateString(
-    "en-IN",
-    {
-      day: "numeric",
-      month: "short"
-    }
-  );
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short"
+  });
 }
-
 
 function formatWeekRange(start) {
   const end = addDays(start, 6);
 
-  const startText =
-    start.toLocaleDateString(
-      "en-IN",
-      {
-        day: "numeric",
-        month: "short"
-      }
-    );
+  const startText = start.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short"
+  });
 
-  const endText =
-    end.toLocaleDateString(
-      "en-IN",
-      {
-        day: "numeric",
-        month: "short",
-        year: "numeric"
-      }
-    );
+  const endText = end.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
 
   return `${startText} – ${endText}`;
 }
 
 
 /* =========================================================
-   DATA SAFETY
+   DATA
 ========================================================= */
 
 function createEmptyData() {
   return {
     version: 3,
+
     habits: [],
+
     stats: {
       bestStreak: 0
     }
   };
 }
 
-
 function createHabitId() {
   return (
-    `${Date.now()}-` +
-    `${Math.random().toString(36).slice(2, 10)}`
+    Date.now() +
+    "-" +
+    Math.random()
+      .toString(36)
+      .slice(2, 10)
   );
 }
 
-
 function normalizeCompletions(completions) {
-
   if (
     !completions ||
     typeof completions !== "object" ||
@@ -237,7 +188,7 @@ function normalizeCompletions(completions) {
     return {};
   }
 
-  const result = {};
+  const clean = {};
 
   Object.entries(completions).forEach(
     ([key, value]) => {
@@ -246,20 +197,18 @@ function normalizeCompletions(completions) {
         /^\d{4}-\d{2}-\d{2}$/.test(key) &&
         value === true
       ) {
-        result[key] = true;
+        clean[key] = true;
       }
 
     }
   );
 
-  return result;
+  return clean;
 }
-
 
 function normalizeData(raw) {
 
-  const clean =
-    createEmptyData();
+  const clean = createEmptyData();
 
   if (
     !raw ||
@@ -277,9 +226,7 @@ function normalizeData(raw) {
           habit =>
             habit &&
             typeof habit === "object" &&
-            String(
-              habit.name || ""
-            ).trim()
+            String(habit.name || "").trim()
         )
         .map(
           habit => ({
@@ -291,7 +238,7 @@ function normalizeData(raw) {
 
             name:
               String(
-                habit.name || ""
+                habit.name
               )
               .trim()
               .slice(0, 50),
@@ -320,10 +267,8 @@ function normalizeData(raw) {
     Number.isFinite(savedBest) &&
     savedBest >= 0
   ) {
-
     clean.stats.bestStreak =
       Math.floor(savedBest);
-
   }
 
   return clean;
@@ -336,22 +281,18 @@ function normalizeData(raw) {
 
 function migrateLegacyData() {
 
-  const result =
-    createEmptyData();
+  const result = createEmptyData();
 
   try {
 
     const raw =
-      localStorage.getItem(
-        "ritmo-habits"
-      );
+      localStorage.getItem("ritmo-habits");
 
     if (!raw) {
       return result;
     }
 
-    const legacy =
-      JSON.parse(raw);
+    const legacy = JSON.parse(raw);
 
     if (!Array.isArray(legacy)) {
       return result;
@@ -362,9 +303,7 @@ function migrateLegacyData() {
 
         if (
           !habit ||
-          !String(
-            habit.name || ""
-          ).trim()
+          !String(habit.name || "").trim()
         ) {
           return;
         }
@@ -377,11 +316,9 @@ function migrateLegacyData() {
             habit.lastCompletedDate || ""
           )
         ) {
-
           completions[
             habit.lastCompletedDate
           ] = true;
-
         }
 
         result.habits.push({
@@ -393,11 +330,9 @@ function migrateLegacyData() {
             ),
 
           name:
-            String(
-              habit.name
-            )
-            .trim()
-            .slice(0, 50),
+            String(habit.name)
+              .trim()
+              .slice(0, 50),
 
           createdAt:
             new Date().toISOString(),
@@ -455,15 +390,9 @@ function loadData() {
   catch (error) {
 
     console.error(
-      "Ritmo load error:",
+      "Primary data recovery required:",
       error
     );
-
-    /*
-      Primary record is unreadable — attempt
-      to recover from the backup copy before
-      falling back to legacy migration.
-    */
 
     try {
 
@@ -484,7 +413,7 @@ function loadData() {
     catch (backupError) {
 
       console.error(
-        "Ritmo backup recovery error:",
+        "Backup recovery failed:",
         backupError
       );
 
@@ -502,11 +431,6 @@ function saveData() {
 
     const serialized =
       JSON.stringify(data);
-
-    /*
-      Keep a recovery copy before replacing
-      the main record.
-    */
 
     const previous =
       localStorage.getItem(
@@ -558,65 +482,55 @@ function calculateBestStreak(habit) {
     )
     .sort();
 
-  let best = 0;
-  let current = 0;
-  let previous = null;
+  if (dates.length === 0) {
+    return 0;
+  }
 
-  dates.forEach(
-    key => {
+  let best = 1;
+  let current = 1;
 
-      if (previous) {
+  for (let i = 1; i < dates.length; i++) {
 
-        const difference =
-          Math.round(
-            (
-              parseDateKey(key) -
-              parseDateKey(previous)
-            ) / 86400000
-          );
+    const previous =
+      parseDateKey(
+        dates[i - 1]
+      );
 
-        if (difference === 1) {
-          current++;
-        }
-        else {
-          current = 1;
-        }
+    const currentDate =
+      parseDateKey(
+        dates[i]
+      );
 
-      }
-      else {
-        current = 1;
-      }
+    const difference =
+      Math.round(
+        (
+          currentDate -
+          previous
+        ) / 86400000
+      );
 
-      best =
-        Math.max(
-          best,
-          current
-        );
-
-      previous = key;
-
+    if (difference === 1) {
+      current++;
     }
-  );
+    else {
+      current = 1;
+    }
+
+    best =
+      Math.max(
+        best,
+        current
+      );
+  }
 
   return best;
 }
 
-
 function calculateCurrentStreak(habit) {
 
-  const todayKey =
-    getDateKey();
-
-  if (
-    habit.completions[todayKey] !== true
-  ) {
-    return 0;
-  }
+  let cursor = new Date();
 
   let streak = 0;
-
-  let cursor =
-    new Date();
 
   while (
     habit.completions[
@@ -631,48 +545,47 @@ function calculateCurrentStreak(habit) {
         cursor,
         -1
       );
-
   }
 
   return streak;
 }
 
-
-function getLongestCurrentOrRecentStreak(habit) {
-
-  return calculateBestStreak(habit);
-}
-
-
 function updatePermanentBestStreak() {
+
+  let highest =
+    Number(
+      data.stats.bestStreak
+    ) || 0;
 
   data.habits.forEach(
     habit => {
 
-      data.stats.bestStreak =
+      highest =
         Math.max(
-          data.stats.bestStreak,
+          highest,
           calculateBestStreak(habit)
         );
 
     }
   );
-}
 
+  data.stats.bestStreak =
+    highest;
+}
 
 function countTotalCompletions(habit) {
 
-  return Object.keys(
+  return Object.values(
     habit.completions || {}
   ).filter(
-    key =>
-      habit.completions[key] === true
+    value =>
+      value === true
   ).length;
 }
 
 
 /* =========================================================
-   ADD HABIT
+   ADD
 ========================================================= */
 
 function addHabit() {
@@ -681,9 +594,7 @@ function addHabit() {
     habitInput.value.trim();
 
   if (!name) {
-
     habitInput.focus();
-
     return;
   }
 
@@ -696,8 +607,11 @@ function addHabit() {
 
   if (exists) {
 
-    habitInput.focus();
+    alert(
+      "This habit already exists."
+    );
 
+    habitInput.focus();
     habitInput.select();
 
     return;
@@ -729,7 +643,7 @@ function addHabit() {
 
 
 /* =========================================================
-   EDIT HABIT
+   EDIT
 ========================================================= */
 
 function editHabit(habitId) {
@@ -770,9 +684,11 @@ function editHabit(habitId) {
     );
 
   if (duplicate) {
-    window.alert(
+
+    alert(
       "A habit with this name already exists."
     );
+
     return;
   }
 
@@ -786,7 +702,7 @@ function editHabit(habitId) {
 
 
 /* =========================================================
-   COMPLETION SYSTEM
+   COMPLETION
 ========================================================= */
 
 function toggleCompletion(
@@ -812,10 +728,10 @@ function toggleCompletion(
     return;
   }
 
-  const wasCompleted =
+  const completed =
     habit.completions[dateKey] === true;
 
-  if (wasCompleted) {
+  if (completed) {
 
     delete habit.completions[
       dateKey
@@ -828,7 +744,9 @@ function toggleCompletion(
       dateKey
     ] = true;
 
-    playCompletionAnimation(button);
+    playCompletionAnimation(
+      button
+    );
 
   }
 
@@ -838,7 +756,6 @@ function toggleCompletion(
 
   render();
 }
-
 
 function playCompletionAnimation(button) {
 
@@ -858,11 +775,9 @@ function playCompletionAnimation(button) {
 
   setTimeout(
     () => {
-
       button.classList.remove(
         "completion-pop"
       );
-
     },
     450
   );
@@ -870,15 +785,15 @@ function playCompletionAnimation(button) {
 
 
 /* =========================================================
-   SAFE DELETE + UNDO
+   DELETE + UNDO
 ========================================================= */
 
 function deleteHabit(habitId) {
 
   const index =
     data.habits.findIndex(
-      item =>
-        item.id === habitId
+      habit =>
+        habit.id === habitId
     );
 
   if (index === -1) {
@@ -890,7 +805,7 @@ function deleteHabit(habitId) {
 
   const confirmed =
     window.confirm(
-      `Delete "${habit.name}"?\n\nYou can undo this deletion for a few seconds.`
+      `Delete "${habit.name}"?\n\nYou can undo this deletion for 5 seconds.`
     );
 
   if (!confirmed) {
@@ -911,7 +826,6 @@ function deleteHabit(habitId) {
     index
   );
 }
-
 
 function showUndoDelete(
   habit,
@@ -943,7 +857,6 @@ function showUndoDelete(
     document.body.appendChild(
       toast
     );
-
   }
 
   toast.innerHTML = "";
@@ -1018,9 +931,13 @@ function showUndoDelete(
 
         setTimeout(
           () => {
-            if (toast.isConnected) {
+
+            if (
+              toast.isConnected
+            ) {
               toast.remove();
             }
+
           },
           250
         );
@@ -1035,19 +952,6 @@ function showUndoDelete(
    WEEK NAVIGATION
 ========================================================= */
 
-function getWeekDates() {
-
-  return Array.from(
-    { length: 7 },
-    (_, index) =>
-      addDays(
-        viewedWeekStart,
-        index
-      )
-  );
-}
-
-
 function goToPreviousWeek() {
 
   viewedWeekStart =
@@ -1059,7 +963,6 @@ function goToPreviousWeek() {
   render();
 }
 
-
 function goToNextWeek() {
 
   viewedWeekStart =
@@ -1070,7 +973,6 @@ function goToNextWeek() {
 
   render();
 }
-
 
 function goToToday() {
 
@@ -1089,48 +991,31 @@ function goToToday() {
 
 function renderWeekHeader() {
 
-  if (weekLabel) {
-
-    const thisWeek =
-      startOfWeek(
-        new Date()
-      );
-
-    weekLabel.textContent =
-      isSameDate(
-        viewedWeekStart,
-        thisWeek
-      )
-        ? "This Week"
-        : formatWeekRange(
-            viewedWeekStart
-          );
-
-  }
-
-  if (dateElement) {
-
-    dateElement.textContent =
-      formatDate(
-        new Date()
-      );
-
-  }
-
-  const thisWeek =
+  const currentWeek =
     startOfWeek(
       new Date()
     );
 
-  if (todayBtn) {
+  weekLabel.textContent =
+    isSameDate(
+      viewedWeekStart,
+      currentWeek
+    )
+      ? "This Week"
+      : formatWeekRange(
+          viewedWeekStart
+        );
 
-    todayBtn.disabled =
-      isSameDate(
-        viewedWeekStart,
-        thisWeek
-      );
+  dateElement.textContent =
+    formatDate(
+      new Date()
+    );
 
-  }
+  todayBtn.disabled =
+    isSameDate(
+      viewedWeekStart,
+      currentWeek
+    );
 }
 
 
@@ -1164,19 +1049,15 @@ function createDayButton(
     "day-cell";
 
   if (completed) {
-
     button.classList.add(
       "is-complete"
     );
-
   }
 
   if (future) {
-
     button.classList.add(
       "is-future"
     );
-
   }
 
   button.disabled =
@@ -1184,9 +1065,7 @@ function createDayButton(
 
   button.setAttribute(
     "aria-label",
-    `${habit.name}, ${
-      DAY_NAMES[date.getDay()]
-    } ${formatDate(date)}: ${
+    `${habit.name}, ${DAY_NAMES[date.getDay()]} ${formatDate(date)}: ${
       completed
         ? "completed"
         : "not completed"
@@ -1200,21 +1079,15 @@ function createDayButton(
         "span"
       );
 
-    tick.textContent =
-      "✓";
-
-    tick.setAttribute(
-      "aria-hidden",
-      "true"
-    );
-
     tick.className =
       "completion-tick";
+
+    tick.textContent =
+      "✓";
 
     button.appendChild(
       tick
     );
-
   }
 
   button.addEventListener(
@@ -1253,9 +1126,6 @@ function renderMatrix(dates) {
   emptyState.hidden =
     true;
 
-
-  /* HEADER */
-
   const header =
     document.createElement(
       "div"
@@ -1264,21 +1134,20 @@ function renderMatrix(dates) {
   header.className =
     "matrix-row matrix-header";
 
-  const habitHeading =
+  const heading =
     document.createElement(
       "div"
     );
 
-  habitHeading.className =
+  heading.className =
     "habit-column matrix-heading";
 
-  habitHeading.textContent =
+  heading.textContent =
     "Habit";
 
   header.appendChild(
-    habitHeading
+    heading
   );
-
 
   dates.forEach(
     date => {
@@ -1297,11 +1166,9 @@ function renderMatrix(dates) {
           new Date()
         )
       ) {
-
         day.classList.add(
           "is-today"
         );
-
       }
 
       const name =
@@ -1345,8 +1212,6 @@ function renderMatrix(dates) {
   );
 
 
-  /* HABITS */
-
   data.habits.forEach(
     habit => {
 
@@ -1368,4 +1233,76 @@ function renderMatrix(dates) {
         "habit-column";
 
 
-      const 
+      const info =
+        document.createElement(
+          "div"
+        );
+
+      info.className =
+        "habit-info";
+
+
+      const name =
+        document.createElement(
+          "div"
+        );
+
+      name.className =
+        "habit-name";
+
+      name.textContent =
+        habit.name;
+
+
+      const currentStreak =
+        calculateCurrentStreak(
+          habit
+        );
+
+      const streak =
+        document.createElement(
+          "div"
+        );
+
+      streak.className =
+        "habit-streak";
+
+      streak.innerHTML =
+        `Current streak: <strong>${currentStreak}</strong> day${currentStreak === 1 ? "" : "s"}`;
+
+
+      const actions =
+        document.createElement(
+          "div"
+        );
+
+      actions.className =
+        "habit-actions";
+
+
+      const edit =
+        document.createElement(
+          "button"
+        );
+
+      edit.type =
+        "button";
+
+      edit.className =
+        "edit-button";
+
+      edit.textContent =
+        "Edit";
+
+      edit.addEventListener(
+        "click",
+        () => {
+          editHabit(
+            habit.id
+          );
+        }
+      );
+
+
+      const remove =
+    
