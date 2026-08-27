@@ -1,22 +1,33 @@
 /* =========================================================
-   RITMO V3 — HABIT TRACKER
-   Permanent daily history
-   Weekly Sunday → Saturday tracker
-   Permanent Best Streak
+   RITMO
+   Complete Habit Tracker Engine
 ========================================================= */
 
-const STORAGE_KEY = "ritmo-v3-data";
+"use strict";
+
+
+/* =========================================================
+   STORAGE
+========================================================= */
+
+const STORAGE_KEY = "ritmo-v4-data";
 
 
 /* =========================================================
    DOM
 ========================================================= */
 
-const habitInput = document.getElementById("habitInput");
-const addHabitBtn = document.getElementById("addHabitBtn");
+const habitInput =
+  document.getElementById("habitInput");
 
-const habitMatrix = document.getElementById("habitMatrix");
-const emptyState = document.getElementById("emptyState");
+const addHabitBtn =
+  document.getElementById("addHabitBtn");
+
+const habitMatrix =
+  document.getElementById("habitMatrix");
+
+const emptyState =
+  document.getElementById("emptyState");
 
 const progressPercent =
   document.getElementById("progressPercent");
@@ -39,9 +50,6 @@ const weekLabel =
 const dateElement =
   document.getElementById("date");
 
-const todayLabel =
-  document.getElementById("todayLabel");
-
 const previousWeekBtn =
   document.getElementById("previousWeekBtn");
 
@@ -50,9 +58,6 @@ const nextWeekBtn =
 
 const todayBtn =
   document.getElementById("todayBtn");
-
-const currentWeekBtn =
-  document.getElementById("currentWeekBtn");
 
 
 /* =========================================================
@@ -71,21 +76,18 @@ const DAY_NAMES = [
 
 
 /* =========================================================
-   VIEWED WEEK
+   STATE
 ========================================================= */
 
-let viewedWeekStart;
+let viewedWeekStart =
+  startOfWeek(new Date());
+
+let data =
+  loadData();
 
 
 /* =========================================================
-   DATA
-========================================================= */
-
-let data;
-
-
-/* =========================================================
-   DATE HELPERS
+   DATE FUNCTIONS
 ========================================================= */
 
 function pad(value) {
@@ -221,8 +223,7 @@ function formatWeekRange(start) {
       "en-IN",
       {
         day: "numeric",
-        month: "short",
-        year: "numeric"
+        month: "short"
       }
     );
 
@@ -232,31 +233,23 @@ function formatWeekRange(start) {
 
 
 /* =========================================================
-   DATA STRUCTURE
+   DATA
 ========================================================= */
 
 function createEmptyData() {
 
   return {
-
-    version: 3,
+    version: 4,
 
     habits: [],
 
     stats: {
-
       bestStreak: 0
-
     }
-
   };
 
 }
 
-
-/* =========================================================
-   COMPLETION CLEANING
-========================================================= */
 
 function normalizeCompletions(completions) {
 
@@ -272,29 +265,23 @@ function normalizeCompletions(completions) {
   const result = {};
 
   Object.entries(completions)
-    .forEach(
-      ([key, value]) => {
+    .forEach(([key, value]) => {
 
-        if (
-          /^\d{4}-\d{2}-\d{2}$/.test(key) &&
-          value === true
-        ) {
+      if (
+        /^\d{4}-\d{2}-\d{2}$/.test(key) &&
+        value === true
+      ) {
 
-          result[key] = true;
-
-        }
+        result[key] = true;
 
       }
-    );
+
+    });
 
   return result;
 
 }
 
-
-/* =========================================================
-   DATA NORMALIZATION
-========================================================= */
 
 function normalizeData(raw) {
 
@@ -317,47 +304,44 @@ function normalizeData(raw) {
 
     clean.habits =
       raw.habits
+        .filter(habit => {
 
-        .filter(
-          habit =>
+          return (
             habit &&
             typeof habit === "object" &&
-            String(
-              habit.name || ""
-            ).trim()
-        )
+            String(habit.name || "").trim()
+          );
 
-        .map(
-          habit => {
+        })
+        .map(habit => {
 
-            return {
+          return {
 
-              id:
-                String(
-                  habit.id ||
-                  `${Date.now()}-${Math.random()}`
-                ),
+            id:
+              String(
+                habit.id ||
+                `${Date.now()}-${Math.random()
+                  .toString(36)
+                  .slice(2)}`
+              ),
 
-              name:
-                String(
-                  habit.name
-                )
+            name:
+              String(habit.name)
                 .trim()
                 .slice(0, 50),
 
-              createdAt:
-                habit.createdAt ||
-                new Date().toISOString(),
+            createdAt:
+              habit.createdAt ||
+              new Date().toISOString(),
 
-              completions:
-                normalizeCompletions(
-                  habit.completions
-                )
+            completions:
+              normalizeCompletions(
+                habit.completions
+              )
 
-            };
+          };
 
-          }
-        );
+        });
 
   }
 
@@ -386,7 +370,7 @@ function normalizeData(raw) {
 
 
 /* =========================================================
-   OLD DATA MIGRATION
+   LEGACY MIGRATION
 ========================================================= */
 
 function migrateLegacyData() {
@@ -401,99 +385,76 @@ function migrateLegacyData() {
         "ritmo-habits"
       );
 
-
     if (!raw) {
-
       return result;
-
     }
-
 
     const legacy =
       JSON.parse(raw);
 
-
-    if (
-      !Array.isArray(legacy)
-    ) {
-
+    if (!Array.isArray(legacy)) {
       return result;
-
     }
 
+    legacy.forEach((habit, index) => {
 
-    legacy.forEach(
-      (habit, index) => {
+      if (
+        !habit ||
+        !String(habit.name || "").trim()
+      ) {
 
-        if (
-          !habit ||
-          !String(
-            habit.name || ""
-          ).trim()
-        ) {
+        return;
 
-          return;
+      }
 
-        }
+      const completions = {};
 
+      if (
+        habit.completed === true &&
+        /^\d{4}-\d{2}-\d{2}$/.test(
+          habit.lastCompletedDate || ""
+        )
+      ) {
 
-        const completions = {};
+        completions[
+          habit.lastCompletedDate
+        ] = true;
 
+      }
 
-        if (
-          habit.completed === true &&
-          /^\d{4}-\d{2}-\d{2}$/.test(
-            habit.lastCompletedDate || ""
-          )
-        ) {
+      result.habits.push({
 
-          completions[
-            habit.lastCompletedDate
-          ] = true;
+        id:
+          String(
+            habit.id ||
+            `${Date.now()}-${index}`
+          ),
 
-        }
-
-
-        result.habits.push({
-
-          id:
-            String(
-              habit.id ||
-              `${Date.now()}-${index}`
-            ),
-
-          name:
-            String(
-              habit.name
-            )
+        name:
+          String(habit.name)
             .trim()
             .slice(0, 50),
 
-          createdAt:
-            new Date().toISOString(),
+        createdAt:
+          new Date().toISOString(),
 
-          completions
+        completions
 
-        });
+      });
 
 
-        result.stats.bestStreak =
-          Math.max(
+      result.stats.bestStreak =
+        Math.max(
 
-            result.stats.bestStreak,
+          result.stats.bestStreak,
 
-            Number(
-              habit.bestStreak
-            ) || 0,
+          Number(habit.bestStreak) || 0,
 
-            Number(
-              habit.streak
-            ) || 0
+          Number(habit.streak) || 0
 
-          );
+        );
 
-      }
-    );
+    });
 
   }
 
@@ -506,14 +467,13 @@ function migrateLegacyData() {
 
   }
 
-
   return result;
 
 }
 
 
 /* =========================================================
-   LOAD
+   STORAGE
 ========================================================= */
 
 function loadData() {
@@ -524,7 +484,6 @@ function loadData() {
       localStorage.getItem(
         STORAGE_KEY
       );
-
 
     if (saved) {
 
@@ -545,15 +504,10 @@ function loadData() {
 
   }
 
-
   return migrateLegacyData();
 
 }
 
-
-/* =========================================================
-   SAVE
-========================================================= */
 
 function saveData() {
 
@@ -586,76 +540,58 @@ function calculateBestStreak(habit) {
 
   const dates =
     Object.keys(
-      habit.completions
+      habit.completions || {}
     )
+      .filter(key => {
 
-      .filter(
-        key =>
+        return (
           habit.completions[key] === true
-      )
-
-      .sort();
-
-
-  let best = 0;
-
-  let current = 0;
-
-  let previous = null;
-
-
-  dates.forEach(
-    key => {
-
-      if (previous) {
-
-        const difference =
-          Math.round(
-
-            (
-              parseDateKey(key) -
-              parseDateKey(previous)
-            ) /
-            86400000
-
-          );
-
-
-        if (
-          difference === 1
-        ) {
-
-          current++;
-
-        }
-
-        else {
-
-          current = 1;
-
-        }
-
-      }
-
-      else {
-
-        current = 1;
-
-      }
-
-
-      best =
-        Math.max(
-          best,
-          current
         );
 
+      })
+      .sort();
 
-      previous = key;
+  if (dates.length === 0) {
+    return 0;
+  }
+
+  let best = 1;
+
+  let current = 1;
+
+  for (
+    let i = 1;
+    i < dates.length;
+    i++
+  ) {
+
+    const difference =
+      Math.round(
+        (
+          parseDateKey(dates[i]) -
+          parseDateKey(dates[i - 1])
+        ) / 86400000
+      );
+
+    if (difference === 1) {
+
+      current++;
 
     }
-  );
 
+    else {
+
+      current = 1;
+
+    }
+
+    best =
+      Math.max(
+        best,
+        current
+      );
+
+  }
 
   return best;
 
@@ -667,23 +603,18 @@ function calculateCurrentStreak(habit) {
   const todayKey =
     getDateKey();
 
-
   if (
-    habit.completions[
-      todayKey
-    ] !== true
+    habit.completions[todayKey] !== true
   ) {
 
     return 0;
 
   }
 
-
   let streak = 0;
 
   let cursor =
     new Date();
-
 
   while (
     habit.completions[
@@ -701,34 +632,25 @@ function calculateCurrentStreak(habit) {
 
   }
 
-
   return streak;
 
 }
 
 
-/* =========================================================
-   PERMANENT BEST STREAK
-========================================================= */
-
 function updatePermanentBestStreak() {
 
-  data.habits.forEach(
-    habit => {
+  data.habits.forEach(habit => {
 
-      data.stats.bestStreak =
-        Math.max(
+    data.stats.bestStreak =
+      Math.max(
 
-          data.stats.bestStreak,
+        data.stats.bestStreak,
 
-          calculateBestStreak(
-            habit
-          )
+        calculateBestStreak(habit)
 
-        );
+      );
 
-    }
-  );
+  });
 
 }
 
@@ -742,7 +664,6 @@ function addHabit() {
   const name =
     habitInput.value.trim();
 
-
   if (!name) {
 
     habitInput.focus();
@@ -753,11 +674,14 @@ function addHabit() {
 
 
   const exists =
-    data.habits.some(
-      habit =>
+    data.habits.some(habit => {
+
+      return (
         habit.name.toLowerCase() ===
         name.toLowerCase()
-    );
+      );
+
+    });
 
 
   if (exists) {
@@ -791,7 +715,6 @@ function addHabit() {
 
   habitInput.value = "";
 
-
   saveData();
 
   render();
@@ -813,65 +736,39 @@ function toggleCompletion(
   const habit =
     data.habits.find(
       item =>
-        item.id ===
-        habitId
+        item.id === habitId
     );
 
-
   if (!habit) {
-
     return;
-
   }
 
 
   const date =
-    parseDateKey(
-      dateKey
-    );
+    parseDateKey(dateKey);
 
 
-  if (
-    isFutureDate(date)
-  ) {
-
+  if (isFutureDate(date)) {
     return;
-
   }
 
 
   if (
-    habit.completions[
-      dateKey
-    ] === true
+    habit.completions[dateKey] === true
   ) {
 
-    delete habit.completions[
-      dateKey
-    ];
+    delete habit.completions[dateKey];
 
   }
 
   else {
 
-    habit.completions[
-      dateKey
-    ] = true;
-
-
-    data.stats.bestStreak =
-      Math.max(
-
-        data.stats.bestStreak,
-
-        calculateBestStreak(
-          habit
-        )
-
-      );
+    habit.completions[dateKey] = true;
 
   }
 
+
+  updatePermanentBestStreak();
 
   saveData();
 
@@ -889,36 +786,29 @@ function deleteHabit(habitId) {
   const habit =
     data.habits.find(
       item =>
-        item.id ===
-        habitId
+        item.id === habitId
     );
 
-
   if (!habit) {
-
     return;
-
   }
 
 
   const confirmed =
     window.confirm(
-      `Delete "${habit.name}"? Your Best Streak will be kept.`
+      `Delete "${habit.name}"?`
     );
 
 
   if (!confirmed) {
-
     return;
-
   }
 
 
   data.habits =
     data.habits.filter(
       item =>
-        item.id !==
-        habitId
+        item.id !== habitId
     );
 
 
@@ -939,13 +829,14 @@ function getWeekDates() {
     {
       length: 7
     },
+    (_, index) => {
 
-    (_, index) =>
-      addDays(
+      return addDays(
         viewedWeekStart,
         index
-      )
+      );
 
+    }
   );
 
 }
@@ -957,68 +848,35 @@ function getWeekDates() {
 
 function renderWeekHeader() {
 
-  if (weekLabel) {
-
-    weekLabel.textContent =
-      formatWeekRange(
-        viewedWeekStart
-      );
-
-  }
+  weekLabel.textContent =
+    formatWeekRange(
+      viewedWeekStart
+    );
 
 
-  if (dateElement) {
-
-    dateElement.textContent =
-      formatDate(
-        new Date()
-      );
-
-  }
+  dateElement.textContent =
+    formatDate(
+      new Date()
+    );
 
 
-  if (todayLabel) {
-
-    todayLabel.textContent =
-      `Today · ${formatDate(
-        new Date()
-      )}`;
-
-  }
-
-
-  const thisWeek =
+  const currentWeek =
     startOfWeek(
       new Date()
     );
 
 
-  if (todayBtn) {
-
-    todayBtn.disabled =
-      isSameDate(
-        viewedWeekStart,
-        thisWeek
-      );
-
-  }
-
-
-  if (currentWeekBtn) {
-
-    currentWeekBtn.disabled =
-      isSameDate(
-        viewedWeekStart,
-        thisWeek
-      );
-
-  }
+  todayBtn.disabled =
+    isSameDate(
+      viewedWeekStart,
+      currentWeek
+    );
 
 }
 
 
 /* =========================================================
-   DAY CELL
+   DAY BUTTON
 ========================================================= */
 
 function createDayButton(
@@ -1027,31 +885,20 @@ function createDayButton(
 ) {
 
   const key =
-    getDateKey(
-      date
-    );
-
+    getDateKey(date);
 
   const completed =
-    habit.completions[
-      key
-    ] === true;
-
+    habit.completions[key] === true;
 
   const future =
-    isFutureDate(
-      date
-    );
+    isFutureDate(date);
 
 
   const button =
-    document.createElement(
-      "button"
-    );
+    document.createElement("button");
 
 
-  button.type =
-    "button";
+  button.type = "button";
 
 
   button.className =
@@ -1082,11 +929,8 @@ function createDayButton(
 
   button.setAttribute(
     "aria-label",
-
     `${habit.name}, ${
-      DAY_NAMES[
-        date.getDay()
-      ]
+      DAY_NAMES[date.getDay()]
     } ${formatDate(date)}: ${
       completed
         ? "completed"
@@ -1098,28 +942,23 @@ function createDayButton(
   if (completed) {
 
     const tick =
-      document.createElement(
-        "span"
-      );
+      document.createElement("span");
 
-    tick.textContent =
-      "✓";
+    tick.textContent = "✓";
 
     tick.setAttribute(
       "aria-hidden",
       "true"
     );
 
-    button.appendChild(
-      tick
-    );
+    button.appendChild(tick);
 
   }
 
 
   button.addEventListener(
     "click",
-    function () {
+    () => {
 
       toggleCompletion(
         habit.id,
@@ -1148,39 +987,30 @@ function renderMatrix(dates) {
     data.habits.length === 0
   ) {
 
-    emptyState.hidden =
-      false;
+    emptyState.hidden = false;
 
     return;
 
   }
 
 
-  emptyState.hidden =
-    true;
+  emptyState.hidden = true;
 
 
   /* HEADER */
 
   const header =
-    document.createElement(
-      "div"
-    );
-
+    document.createElement("div");
 
   header.className =
     "matrix-row matrix-header";
 
 
   const habitHeading =
-    document.createElement(
-      "div"
-    );
-
+    document.createElement("div");
 
   habitHeading.className =
     "habit-column matrix-heading";
-
 
   habitHeading.textContent =
     "Habit";
@@ -1191,222 +1021,176 @@ function renderMatrix(dates) {
   );
 
 
-  dates.forEach(
-    date => {
+  dates.forEach(date => {
 
-      const day =
-        document.createElement(
-          "div"
-        );
+    const day =
+      document.createElement("div");
 
-
-      day.className =
-        "day-column";
+    day.className =
+      "day-column";
 
 
-      if (
-        isSameDate(
-          date,
-          new Date()
-        )
-      ) {
+    if (
+      isSameDate(
+        date,
+        new Date()
+      )
+    ) {
 
-        day.classList.add(
-          "is-today"
+      day.classList.add(
+        "is-today"
+      );
+
+    }
+
+
+    const name =
+      document.createElement("span");
+
+    name.className =
+      "day-name";
+
+    name.textContent =
+      DAY_NAMES[
+        date.getDay()
+      ];
+
+
+    const number =
+      document.createElement("span");
+
+    number.className =
+      "day-date";
+
+    number.textContent =
+      date.getDate();
+
+
+    day.append(
+      name,
+      number
+    );
+
+
+    header.appendChild(day);
+
+  });
+
+
+  habitMatrix.appendChild(header);
+
+
+  /* HABITS */
+
+  data.habits.forEach(habit => {
+
+    const row =
+      document.createElement("div");
+
+    row.className =
+      "matrix-row habit-row";
+
+
+    const habitColumn =
+      document.createElement("div");
+
+    habitColumn.className =
+      "habit-column";
+
+
+    const info =
+      document.createElement("div");
+
+    info.className =
+      "habit-info";
+
+
+    const name =
+      document.createElement("span");
+
+    name.className =
+      "habit-name";
+
+    name.textContent =
+      habit.name;
+
+
+    const streak =
+      document.createElement("span");
+
+    streak.className =
+      "habit-streak";
+
+
+    const currentStreak =
+      calculateCurrentStreak(
+        habit
+      );
+
+
+    streak.textContent =
+      currentStreak > 0
+        ? `${currentStreak} day streak`
+        : "No active streak";
+
+
+    info.append(
+      name,
+      streak
+    );
+
+
+    const deleteButton =
+      document.createElement("button");
+
+    deleteButton.type =
+      "button";
+
+    deleteButton.className =
+      "delete-button";
+
+    deleteButton.textContent =
+      "Delete";
+
+
+    deleteButton.addEventListener(
+      "click",
+      () => {
+
+        deleteHabit(
+          habit.id
         );
 
       }
+    );
 
 
-      const name =
-        document.createElement(
-          "span"
-        );
+    habitColumn.append(
+      info,
+      deleteButton
+    );
 
 
-      name.className =
-        "day-name";
+    row.appendChild(
+      habitColumn
+    );
 
 
-      name.textContent =
-        DAY_NAMES[
-          date.getDay()
-        ];
-
-
-      const number =
-        document.createElement(
-          "span"
-        );
-
-
-      number.className =
-        "day-date";
-
-
-      number.textContent =
-        date.getDate();
-
-
-      day.append(
-        name,
-        number
-      );
-
-
-      header.appendChild(
-        day
-      );
-
-    }
-  );
-
-
-  habitMatrix.appendChild(
-    header
-  );
-
-
-  /* HABIT ROWS */
-
-  data.habits.forEach(
-    habit => {
-
-      const row =
-        document.createElement(
-          "div"
-        );
-
-
-      row.className =
-        "matrix-row habit-row";
-
-
-      const habitColumn =
-        document.createElement(
-          "div"
-        );
-
-
-      habitColumn.className =
-        "habit-column";
-
-
-      const info =
-        document.createElement(
-          "div"
-        );
-
-
-      info.className =
-        "habit-info";
-
-
-      const name =
-        document.createElement(
-          "span"
-        );
-
-
-      name.className =
-        "habit-name";
-
-
-      name.textContent =
-        habit.name;
-
-
-      const streak =
-        document.createElement(
-          "span"
-        );
-
-
-      streak.className =
-        "habit-streak";
-
-
-      const currentStreak =
-        calculateCurrentStreak(
-          habit
-        );
-
-
-      streak.textContent =
-        currentStreak > 0
-          ? `${currentStreak} day streak`
-          : "No active streak";
-
-
-      info.append(
-        name,
-        streak
-      );
-
-
-      const deleteButton =
-        document.createElement(
-          "button"
-        );
-
-
-      deleteButton.type =
-        "button";
-
-
-      deleteButton.className =
-        "delete-button";
-
-
-      deleteButton.textContent =
-        "Delete";
-
-
-      deleteButton.addEventListener(
-        "click",
-        function () {
-
-          deleteHabit(
-            habit.id
-          );
-
-        }
-      );
-
-
-      habitColumn.append(
-        info,
-        deleteButton
-      );
-
+    dates.forEach(date => {
 
       row.appendChild(
-        habitColumn
+        createDayButton(
+          habit,
+          date
+        )
       );
 
-
-      dates.forEach(
-        date => {
-
-          row.appendChild(
-
-            createDayButton(
-              habit,
-              date
-            )
-
-          );
-
-        }
-      );
+    });
 
 
-      habitMatrix.appendChild(
-        row
-      );
+    habitMatrix.appendChild(row);
 
-    }
-  );
+  });
 
 }
 
@@ -1453,39 +1237,35 @@ function updateStats() {
     completed;
 
 
-  progressPercent.textContent =
-    `${percentage}%`;
-
-
   bestStreak.textContent =
     data.stats.bestStreak;
 
 
+  progressPercent.textContent =
+    `${percentage}%`;
+
+
   /* Progress ring */
 
-  if (progressRing) {
+  const radius = 43;
 
-    const radius = 43;
-
-    const circumference =
-      2 *
-      Math.PI *
-      radius;
+  const circumference =
+    2 *
+    Math.PI *
+    radius;
 
 
-    progressRing.style.strokeDasharray =
-      circumference;
+  progressRing.style.strokeDasharray =
+    circumference;
 
 
-    progressRing.style.strokeDashoffset =
-      circumference -
-      (
-        percentage /
-        100
-      ) *
-      circumference;
-
-  }
+  progressRing.style.strokeDashoffset =
+    circumference -
+    (
+      percentage /
+      100
+    ) *
+    circumference;
 
 }
 
@@ -1519,7 +1299,7 @@ addHabitBtn.addEventListener(
 
 habitInput.addEventListener(
   "keydown",
-  function (event) {
+  event => {
 
     if (
       event.key === "Enter"
@@ -1535,7 +1315,75 @@ habitInput.addEventListener(
 );
 
 
-if (previousWeekBtn) {
+previousWeekBtn.addEventListener(
+  "click",
+  () => {
 
-  previousWeekBtn.addEventListener(
-    "clic
+    viewedWeekStart =
+      addDays(
+        viewedWeekStart,
+        -7
+      );
+
+    render();
+
+  }
+);
+
+
+nextWeekBtn.addEventListener(
+  "click",
+  () => {
+
+    const nextWeek =
+      addDays(
+        viewedWeekStart,
+        7
+      );
+
+
+    const currentWeek =
+      startOfWeek(
+        new Date()
+      );
+
+
+    if (
+      nextWeek <= currentWeek
+    ) {
+
+      viewedWeekStart =
+        nextWeek;
+
+      render();
+
+    }
+
+  }
+);
+
+
+todayBtn.addEventListener(
+  "click",
+  () => {
+
+    viewedWeekStart =
+      startOfWeek(
+        new Date()
+      );
+
+    render();
+
+  }
+);
+
+
+/* =========================================================
+   START
+========================================================= */
+
+updatePermanentBestStreak();
+
+saveData();
+
+render();
