@@ -1,19 +1,28 @@
+/* =========================================================
+   RITMO V3 — HABIT TRACKER
+   Permanent daily history
+   Weekly Sunday → Saturday tracker
+   Permanent Best Streak
+========================================================= */
+
 const STORAGE_KEY = "ritmo-v3-data";
 
-const habitInput =
-  document.getElementById("habitInput");
 
-const addHabitBtn =
-  document.getElementById("addHabitBtn");
+/* =========================================================
+   DOM
+========================================================= */
 
-const habitMatrix =
-  document.getElementById("habitMatrix");
+const habitInput = document.getElementById("habitInput");
+const addHabitBtn = document.getElementById("addHabitBtn");
 
-const emptyState =
-  document.getElementById("emptyState");
+const habitMatrix = document.getElementById("habitMatrix");
+const emptyState = document.getElementById("emptyState");
 
 const progressPercent =
   document.getElementById("progressPercent");
+
+const progressRing =
+  document.getElementById("progressRing");
 
 const completedCount =
   document.getElementById("completedCount");
@@ -27,6 +36,9 @@ const bestStreak =
 const weekLabel =
   document.getElementById("weekLabel");
 
+const dateElement =
+  document.getElementById("date");
+
 const todayLabel =
   document.getElementById("todayLabel");
 
@@ -36,9 +48,16 @@ const previousWeekBtn =
 const nextWeekBtn =
   document.getElementById("nextWeekBtn");
 
+const todayBtn =
+  document.getElementById("todayBtn");
+
 const currentWeekBtn =
   document.getElementById("currentWeekBtn");
 
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
 
 const DAY_NAMES = [
   "Sun",
@@ -51,29 +70,32 @@ const DAY_NAMES = [
 ];
 
 
-let viewedWeekStart =
-  startOfWeek(new Date());
+/* =========================================================
+   VIEWED WEEK
+========================================================= */
+
+let viewedWeekStart;
 
 
-let data =
-  loadData();
+/* =========================================================
+   DATA
+========================================================= */
+
+let data;
 
 
-/* =========================================
-   DATE FUNCTIONS
-========================================= */
+/* =========================================================
+   DATE HELPERS
+========================================================= */
 
 function pad(value) {
 
-  return String(value)
-    .padStart(2, "0");
+  return String(value).padStart(2, "0");
 
 }
 
 
-function getDateKey(
-  date = new Date()
-) {
+function getDateKey(date = new Date()) {
 
   return (
     `${date.getFullYear()}-` +
@@ -86,20 +108,13 @@ function getDateKey(
 
 function parseDateKey(key) {
 
-  const [
-    year,
-    month,
-    day
-  ] =
-    key
-      .split("-")
-      .map(Number);
-
+  const parts =
+    key.split("-").map(Number);
 
   return new Date(
-    year,
-    month - 1,
-    day
+    parts[0],
+    parts[1] - 1,
+    parts[2]
   );
 
 }
@@ -114,42 +129,30 @@ function startOfWeek(date) {
       date.getDate()
     );
 
-
   result.setDate(
-    result.getDate() -
-    result.getDay()
+    result.getDate() - result.getDay()
   );
-
 
   return result;
 
 }
 
 
-function addDays(
-  date,
-  amount
-) {
+function addDays(date, amount) {
 
   const result =
     new Date(date);
 
-
   result.setDate(
-    result.getDate() +
-    amount
+    result.getDate() + amount
   );
-
 
   return result;
 
 }
 
 
-function isSameDate(
-  first,
-  second
-) {
+function isSameDate(first, second) {
 
   return (
     getDateKey(first) ===
@@ -164,7 +167,6 @@ function isFutureDate(date) {
   const today =
     new Date();
 
-
   today.setHours(
     0,
     0,
@@ -172,10 +174,8 @@ function isFutureDate(date) {
     0
   );
 
-
   const target =
     new Date(date);
-
 
   target.setHours(
     0,
@@ -183,7 +183,6 @@ function isFutureDate(date) {
     0,
     0
   );
-
 
   return target > today;
 
@@ -208,7 +207,6 @@ function formatWeekRange(start) {
   const end =
     addDays(start, 6);
 
-
   const startText =
     start.toLocaleDateString(
       "en-IN",
@@ -217,7 +215,6 @@ function formatWeekRange(start) {
         month: "short"
       }
     );
-
 
   const endText =
     end.toLocaleDateString(
@@ -229,17 +226,14 @@ function formatWeekRange(start) {
       }
     );
 
-
-  return (
-    `${startText} – ${endText}`
-  );
+  return `${startText} – ${endText}`;
 
 }
 
 
-/* =========================================
-   DATA
-========================================= */
+/* =========================================================
+   DATA STRUCTURE
+========================================================= */
 
 function createEmptyData() {
 
@@ -260,9 +254,11 @@ function createEmptyData() {
 }
 
 
-function normalizeCompletions(
-  completions
-) {
+/* =========================================================
+   COMPLETION CLEANING
+========================================================= */
+
+function normalizeCompletions(completions) {
 
   if (
     !completions ||
@@ -273,38 +269,37 @@ function normalizeCompletions(
 
   }
 
-
   const result = {};
 
+  Object.entries(completions)
+    .forEach(
+      ([key, value]) => {
 
-  Object.entries(
-    completions
-  ).forEach(
-    ([key, value]) => {
+        if (
+          /^\d{4}-\d{2}-\d{2}$/.test(key) &&
+          value === true
+        ) {
 
-      if (
-        /^\d{4}-\d{2}-\d{2}$/.test(key) &&
-        value === true
-      ) {
+          result[key] = true;
 
-        result[key] = true;
+        }
 
       }
-
-    }
-  );
-
+    );
 
   return result;
 
 }
 
 
+/* =========================================================
+   DATA NORMALIZATION
+========================================================= */
+
 function normalizeData(raw) {
 
   const clean =
     createEmptyData();
-
 
   if (
     !raw ||
@@ -317,9 +312,7 @@ function normalizeData(raw) {
 
 
   if (
-    Array.isArray(
-      raw.habits
-    )
+    Array.isArray(raw.habits)
   ) {
 
     clean.habits =
@@ -335,31 +328,35 @@ function normalizeData(raw) {
         )
 
         .map(
-          habit => ({
+          habit => {
 
-            id:
-              String(
-                habit.id ||
-                `${Date.now()}-${Math.random()}`
-              ),
+            return {
 
-            name:
-              String(
-                habit.name
-              )
-              .trim()
-              .slice(0, 50),
+              id:
+                String(
+                  habit.id ||
+                  `${Date.now()}-${Math.random()}`
+                ),
 
-            createdAt:
-              habit.createdAt ||
-              new Date().toISOString(),
+              name:
+                String(
+                  habit.name
+                )
+                .trim()
+                .slice(0, 50),
 
-            completions:
-              normalizeCompletions(
-                habit.completions
-              )
+              createdAt:
+                habit.createdAt ||
+                new Date().toISOString(),
 
-          })
+              completions:
+                normalizeCompletions(
+                  habit.completions
+                )
+
+            };
+
+          }
         );
 
   }
@@ -373,10 +370,8 @@ function normalizeData(raw) {
 
 
   if (
-    Number.isFinite(
-      savedBest
-    ) &&
-    savedBest > 0
+    Number.isFinite(savedBest) &&
+    savedBest >= 0
   ) {
 
     clean.stats.bestStreak =
@@ -390,15 +385,14 @@ function normalizeData(raw) {
 }
 
 
-/* =========================================
-   OLD VERSION MIGRATION
-========================================= */
+/* =========================================================
+   OLD DATA MIGRATION
+========================================================= */
 
 function migrateLegacyData() {
 
   const result =
     createEmptyData();
-
 
   try {
 
@@ -420,9 +414,7 @@ function migrateLegacyData() {
 
 
     if (
-      !Array.isArray(
-        legacy
-      )
+      !Array.isArray(legacy)
     ) {
 
       return result;
@@ -431,10 +423,7 @@ function migrateLegacyData() {
 
 
     legacy.forEach(
-      (
-        habit,
-        index
-      ) => {
+      (habit, index) => {
 
         if (
           !habit ||
@@ -506,7 +495,9 @@ function migrateLegacyData() {
       }
     );
 
-  } catch (error) {
+  }
+
+  catch (error) {
 
     console.error(
       "Ritmo migration error:",
@@ -521,9 +512,9 @@ function migrateLegacyData() {
 }
 
 
-/* =========================================
-   STORAGE
-========================================= */
+/* =========================================================
+   LOAD
+========================================================= */
 
 function loadData() {
 
@@ -543,10 +534,12 @@ function loadData() {
 
     }
 
-  } catch (error) {
+  }
+
+  catch (error) {
 
     console.error(
-      "Ritmo storage error:",
+      "Ritmo load error:",
       error
     );
 
@@ -558,23 +551,38 @@ function loadData() {
 }
 
 
+/* =========================================================
+   SAVE
+========================================================= */
+
 function saveData() {
 
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify(data)
-  );
+  try {
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(data)
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Ritmo save error:",
+      error
+    );
+
+  }
 
 }
 
 
-/* =========================================
+/* =========================================================
    STREAK ENGINE
-========================================= */
+========================================================= */
 
-function calculateBestStreak(
-  habit
-) {
+function calculateBestStreak(habit) {
 
   const dates =
     Object.keys(
@@ -619,13 +627,17 @@ function calculateBestStreak(
 
           current++;
 
-        } else {
+        }
+
+        else {
 
           current = 1;
 
         }
 
-      } else {
+      }
+
+      else {
 
         current = 1;
 
@@ -650,18 +662,16 @@ function calculateBestStreak(
 }
 
 
-function calculateCurrentStreak(
-  habit
-) {
+function calculateCurrentStreak(habit) {
 
   const todayKey =
     getDateKey();
 
 
   if (
-    !habit.completions[
+    habit.completions[
       todayKey
-    ]
+    ] !== true
   ) {
 
     return 0;
@@ -678,7 +688,7 @@ function calculateCurrentStreak(
   while (
     habit.completions[
       getDateKey(cursor)
-    ]
+    ] === true
   ) {
 
     streak++;
@@ -696,6 +706,10 @@ function calculateCurrentStreak(
 
 }
 
+
+/* =========================================================
+   PERMANENT BEST STREAK
+========================================================= */
 
 function updatePermanentBestStreak() {
 
@@ -719,9 +733,9 @@ function updatePermanentBestStreak() {
 }
 
 
-/* =========================================
+/* =========================================================
    ADD HABIT
-========================================= */
+========================================================= */
 
 function addHabit() {
 
@@ -738,7 +752,7 @@ function addHabit() {
   }
 
 
-  const alreadyExists =
+  const exists =
     data.habits.some(
       habit =>
         habit.name.toLowerCase() ===
@@ -746,9 +760,7 @@ function addHabit() {
     );
 
 
-  if (
-    alreadyExists
-  ) {
+  if (exists) {
 
     habitInput.focus();
 
@@ -789,9 +801,9 @@ function addHabit() {
 }
 
 
-/* =========================================
-   CHECK / UNCHECK DAY
-========================================= */
+/* =========================================================
+   TOGGLE COMPLETION
+========================================================= */
 
 function toggleCompletion(
   habitId,
@@ -831,14 +843,16 @@ function toggleCompletion(
   if (
     habit.completions[
       dateKey
-    ]
+    ] === true
   ) {
 
     delete habit.completions[
       dateKey
     ];
 
-  } else {
+  }
+
+  else {
 
     habit.completions[
       dateKey
@@ -866,13 +880,11 @@ function toggleCompletion(
 }
 
 
-/* =========================================
+/* =========================================================
    DELETE HABIT
-========================================= */
+========================================================= */
 
-function deleteHabit(
-  habitId
-) {
+function deleteHabit(habitId) {
 
   const habit =
     data.habits.find(
@@ -891,7 +903,7 @@ function deleteHabit(
 
   const confirmed =
     window.confirm(
-      `Delete “${habit.name}”? Your Best Streak will be kept.`
+      `Delete "${habit.name}"? Your Best Streak will be kept.`
     );
 
 
@@ -917,9 +929,9 @@ function deleteHabit(
 }
 
 
-/* =========================================
+/* =========================================================
    WEEK
-========================================= */
+========================================================= */
 
 function getWeekDates() {
 
@@ -939,37 +951,75 @@ function getWeekDates() {
 }
 
 
+/* =========================================================
+   WEEK HEADER
+========================================================= */
+
 function renderWeekHeader() {
 
-  weekLabel.textContent =
-    formatWeekRange(
-      viewedWeekStart
-    );
+  if (weekLabel) {
+
+    weekLabel.textContent =
+      formatWeekRange(
+        viewedWeekStart
+      );
+
+  }
 
 
-  todayLabel.textContent =
-    `Today · ${formatDate(
-      new Date()
-    )}`;
+  if (dateElement) {
 
-
-  currentWeekBtn.disabled =
-    isSameDate(
-
-      viewedWeekStart,
-
-      startOfWeek(
+    dateElement.textContent =
+      formatDate(
         new Date()
-      )
+      );
 
+  }
+
+
+  if (todayLabel) {
+
+    todayLabel.textContent =
+      `Today · ${formatDate(
+        new Date()
+      )}`;
+
+  }
+
+
+  const thisWeek =
+    startOfWeek(
+      new Date()
     );
+
+
+  if (todayBtn) {
+
+    todayBtn.disabled =
+      isSameDate(
+        viewedWeekStart,
+        thisWeek
+      );
+
+  }
+
+
+  if (currentWeekBtn) {
+
+    currentWeekBtn.disabled =
+      isSameDate(
+        viewedWeekStart,
+        thisWeek
+      );
+
+  }
 
 }
 
 
-/* =========================================
-   DAY BUTTON
-========================================= */
+/* =========================================================
+   DAY CELL
+========================================================= */
 
 function createDayButton(
   habit,
@@ -1005,15 +1055,25 @@ function createDayButton(
 
 
   button.className =
-    `day-cell ${
-      completed
-        ? "is-complete"
-        : ""
-    } ${
-      future
-        ? "is-future"
-        : ""
-    }`;
+    "day-cell";
+
+
+  if (completed) {
+
+    button.classList.add(
+      "is-complete"
+    );
+
+  }
+
+
+  if (future) {
+
+    button.classList.add(
+      "is-future"
+    );
+
+  }
 
 
   button.disabled =
@@ -1027,9 +1087,7 @@ function createDayButton(
       DAY_NAMES[
         date.getDay()
       ]
-    } ${
-      formatDate(date)
-    }: ${
+    } ${formatDate(date)}: ${
       completed
         ? "completed"
         : "not completed"
@@ -1037,23 +1095,38 @@ function createDayButton(
   );
 
 
-  if (
-    completed
-  ) {
+  if (completed) {
 
-    button.innerHTML =
-      `<span aria-hidden="true">✓</span>`;
+    const tick =
+      document.createElement(
+        "span"
+      );
+
+    tick.textContent =
+      "✓";
+
+    tick.setAttribute(
+      "aria-hidden",
+      "true"
+    );
+
+    button.appendChild(
+      tick
+    );
 
   }
 
 
   button.addEventListener(
     "click",
-    () =>
+    function () {
+
       toggleCompletion(
         habit.id,
         key
-      )
+      );
+
+    }
   );
 
 
@@ -1062,16 +1135,13 @@ function createDayButton(
 }
 
 
-/* =========================================
+/* =========================================================
    MATRIX
-========================================= */
+========================================================= */
 
-function renderMatrix(
-  dates
-) {
+function renderMatrix(dates) {
 
-  habitMatrix.innerHTML =
-    "";
+  habitMatrix.innerHTML = "";
 
 
   if (
@@ -1090,9 +1160,7 @@ function renderMatrix(
     true;
 
 
-  /*
-    HEADER
-  */
+  /* HEADER */
 
   const header =
     document.createElement(
@@ -1124,10 +1192,7 @@ function renderMatrix(
 
 
   dates.forEach(
-    (
-      date,
-      index
-    ) => {
+    date => {
 
       const day =
         document.createElement(
@@ -1136,14 +1201,21 @@ function renderMatrix(
 
 
       day.className =
-        `day-column ${
-          isSameDate(
-            date,
-            new Date()
-          )
-            ? "is-today"
-            : ""
-        }`;
+        "day-column";
+
+
+      if (
+        isSameDate(
+          date,
+          new Date()
+        )
+      ) {
+
+        day.classList.add(
+          "is-today"
+        );
+
+      }
 
 
       const name =
@@ -1157,7 +1229,9 @@ function renderMatrix(
 
 
       name.textContent =
-        DAY_NAMES[index];
+        DAY_NAMES[
+          date.getDay()
+        ];
 
 
       const number =
@@ -1193,9 +1267,7 @@ function renderMatrix(
   );
 
 
-  /*
-    HABITS
-  */
+  /* HABIT ROWS */
 
   data.habits.forEach(
     habit => {
@@ -1292,10 +1364,13 @@ function renderMatrix(
 
       deleteButton.addEventListener(
         "click",
-        () =>
+        function () {
+
           deleteHabit(
             habit.id
-          )
+          );
+
+        }
       );
 
 
@@ -1336,9 +1411,9 @@ function renderMatrix(
 }
 
 
-/* =========================================
+/* =========================================================
    STATS
-========================================= */
+========================================================= */
 
 function updateStats() {
 
@@ -1361,9 +1436,7 @@ function updateStats() {
 
   const percentage =
     total === 0
-
       ? 0
-
       : Math.round(
           (
             completed /
@@ -1387,12 +1460,39 @@ function updateStats() {
   bestStreak.textContent =
     data.stats.bestStreak;
 
+
+  /* Progress ring */
+
+  if (progressRing) {
+
+    const radius = 43;
+
+    const circumference =
+      2 *
+      Math.PI *
+      radius;
+
+
+    progressRing.style.strokeDasharray =
+      circumference;
+
+
+    progressRing.style.strokeDashoffset =
+      circumference -
+      (
+        percentage /
+        100
+      ) *
+      circumference;
+
+  }
+
 }
 
 
-/* =========================================
+/* =========================================================
    RENDER
-========================================= */
+========================================================= */
 
 function render() {
 
@@ -1407,9 +1507,9 @@ function render() {
 }
 
 
-/* =========================================
-   BUTTONS
-========================================= */
+/* =========================================================
+   EVENTS
+========================================================= */
 
 addHabitBtn.addEventListener(
   "click",
@@ -1419,11 +1519,13 @@ addHabitBtn.addEventListener(
 
 habitInput.addEventListener(
   "keydown",
-  event => {
+  function (event) {
 
     if (
       event.key === "Enter"
     ) {
+
+      event.preventDefault();
 
       addHabit();
 
@@ -1433,75 +1535,7 @@ habitInput.addEventListener(
 );
 
 
-previousWeekBtn.addEventListener(
-  "click",
-  () => {
+if (previousWeekBtn) {
 
-    viewedWeekStart =
-      addDays(
-        viewedWeekStart,
-        -7
-      );
-
-
-    render();
-
-  }
-);
-
-
-nextWeekBtn.addEventListener(
-  "click",
-  () => {
-
-    const nextWeek =
-      addDays(
-        viewedWeekStart,
-        7
-      );
-
-
-    if (
-      nextWeek <=
-      startOfWeek(
-        new Date()
-      )
-    ) {
-
-      viewedWeekStart =
-        nextWeek;
-
-
-      render();
-
-    }
-
-  }
-);
-
-
-currentWeekBtn.addEventListener(
-  "click",
-  () => {
-
-    viewedWeekStart =
-      startOfWeek(
-        new Date()
-      );
-
-
-    render();
-
-  }
-);
-
-
-/* =========================================
-   START RITMO
-========================================= */
-
-updatePermanentBestStreak();
-
-saveData();
-
-render();
+  previousWeekBtn.addEventListener(
+    "clic
