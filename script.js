@@ -34,6 +34,27 @@ const nextWeekBtn =
 const todayBtn =
   document.getElementById("todayBtn");
 
+const historyBtn =
+  document.getElementById("historyBtn");
+
+const historyPanel =
+  document.getElementById("historyPanel");
+
+const historyCloseBtn =
+  document.getElementById("historyCloseBtn");
+
+const historyList =
+  document.getElementById("historyList");
+
+const historyTotalHabits =
+  document.getElementById("historyTotalHabits");
+
+const historyBestStreak =
+  document.getElementById("historyBestStreak");
+
+const historyTotalCompletions =
+  document.getElementById("historyTotalCompletions");
+
 const DAY_NAMES = [
   "Sun",
   "Mon",
@@ -58,6 +79,10 @@ const MONTH_NAMES = [
   "Nov",
   "Dec"
 ];
+
+const PROGRESS_RADIUS = 43;
+const PROGRESS_CIRCUMFERENCE =
+  2 * Math.PI * PROGRESS_RADIUS;
 
 let viewedWeekStart;
 let data;
@@ -434,6 +459,37 @@ function loadData() {
       error
     );
 
+    /*
+      Primary record is unreadable — attempt
+      to recover from the backup copy before
+      falling back to legacy migration.
+    */
+
+    try {
+
+      const backup =
+        localStorage.getItem(
+          BACKUP_KEY
+        );
+
+      if (backup) {
+
+        return normalizeData(
+          JSON.parse(backup)
+        );
+
+      }
+
+    }
+    catch (backupError) {
+
+      console.error(
+        "Ritmo backup recovery error:",
+        backupError
+      );
+
+    }
+
   }
 
   return migrateLegacyData();
@@ -601,6 +657,17 @@ function updatePermanentBestStreak() {
 
     }
   );
+}
+
+
+function countTotalCompletions(habit) {
+
+  return Object.keys(
+    habit.completions || {}
+  ).filter(
+    key =>
+      habit.completions[key] === true
+  ).length;
 }
 
 
@@ -1024,10 +1091,20 @@ function renderWeekHeader() {
 
   if (weekLabel) {
 
-    weekLabel.textContent =
-      formatWeekRange(
-        viewedWeekStart
+    const thisWeek =
+      startOfWeek(
+        new Date()
       );
+
+    weekLabel.textContent =
+      isSameDate(
+        viewedWeekStart,
+        thisWeek
+      )
+        ? "This Week"
+        : formatWeekRange(
+            viewedWeekStart
+          );
 
   }
 
@@ -1291,94 +1368,4 @@ function renderMatrix(dates) {
         "habit-column";
 
 
-      const info =
-        document.createElement(
-          "div"
-        );
-
-      info.className =
-        "habit-info";
-
-
-      const name =
-        document.createElement(
-          "span"
-        );
-
-      name.className =
-        "habit-name";
-
-      name.textContent =
-        habit.name;
-
-
-      const currentStreak =
-        calculateCurrentStreak(
-          habit
-        );
-
-      const best =
-        getLongestCurrentOrRecentStreak(
-          habit
-        );
-
-
-      const streak =
-        document.createElement(
-          "span"
-        );
-
-      streak.className =
-        "habit-streak";
-
-      if (currentStreak > 0) {
-
-        streak.innerHTML =
-          `<strong>${currentStreak}</strong> day${
-            currentStreak === 1
-              ? ""
-              : "s"
-          } active`;
-
-      }
-      else if (best > 0) {
-
-        streak.innerHTML =
-          `<strong>${best}</strong> best`;
-
-      }
-      else {
-
-        streak.textContent =
-          "Start your streak";
-
-      }
-
-
-      info.append(
-        name,
-        streak
-      );
-
-
-      const actions =
-        document.createElement(
-          "div"
-        );
-
-      actions.className =
-        "habit-actions";
-
-
-      const editButton =
-        document.createElement(
-          "button"
-        );
-
-      editButton.type =
-        "button";
-
-      editButton.className =
-        "edit-button";
-
-      editButton.textConte
+      const 
