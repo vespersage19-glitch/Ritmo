@@ -1,7 +1,7 @@
 /* =========================================================
    RITMO — PHASE 2
-   Premium Light UI
-   Functionality untouched
+   PREMIUM LIGHT UI
+   STABLE VERSION
 ========================================================= */
 
 * {
@@ -12,6 +12,7 @@
 
 :root {
   --bg: #f4f1ea;
+
   --surface: #fffdf9;
   --surface-soft: #f8f5ef;
   --surface-hover: #f1eee7;
@@ -112,10 +113,13 @@ input:focus-visible {
 
 .header {
   display: flex;
+
   align-items: flex-start;
+
   justify-content: space-between;
 
   gap: 30px;
+
   margin-bottom: 34px;
 }
 
@@ -129,9 +133,11 @@ input:focus-visible {
   color: var(--green);
 
   font-size: 9px;
+
   font-weight: 750;
 
   letter-spacing: 2.6px;
+
   line-height: 1;
 }
 
@@ -149,6 +155,7 @@ h1 {
   font-weight: 500;
 
   letter-spacing: -4px;
+
   line-height: 0.88;
 }
 
@@ -158,6 +165,7 @@ h1 {
   color: var(--text-muted);
 
   font-size: 13px;
+
   letter-spacing: 0.1px;
 }
 
@@ -175,6 +183,7 @@ h1 {
   flex-shrink: 0;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -201,6 +210,7 @@ h1 {
 .progress-track,
 .progress-value {
   fill: none;
+
   stroke-width: 5;
 }
 
@@ -223,6 +233,7 @@ h1 {
   color: var(--text);
 
   font-size: 13px;
+
   font-weight: 700;
 }
 
@@ -246,6 +257,7 @@ h1 {
   min-width: 0;
 
   display: flex;
+
   align-items: center;
 
   gap: 13px;
@@ -278,6 +290,7 @@ h1 {
   flex-shrink: 0;
 
   display: flex;
+
   align-items: center;
   justify-content: center;
 
@@ -288,16 +301,19 @@ h1 {
 
 .stat-icon.gold {
   color: var(--gold);
+
   background: var(--gold-soft);
 }
 
 .stat-icon.green {
   color: var(--green);
+
   background: var(--green-soft);
 }
 
 .stat-icon.neutral {
   color: var(--text-soft);
+
   background: #efede8;
 }
 
@@ -307,6 +323,7 @@ h1 {
   color: var(--text);
 
   font-size: 21px;
+
   font-weight: 700;
 
   line-height: 1;
@@ -320,6 +337,7 @@ h1 {
   color: var(--text-muted);
 
   font-size: 10px;
+
   font-weight: 550;
 }
 
@@ -389,6 +407,7 @@ h1 {
   color: white;
 
   font-size: 12px;
+
   font-weight: 700;
 
   cursor: pointer;
@@ -433,6 +452,7 @@ h1 {
   display: flex;
 
   align-items: flex-end;
+
   justify-content: space-between;
 
   gap: 20px;
@@ -448,9 +468,11 @@ h1 {
   color: var(--green);
 
   font-size: 9px;
+
   font-weight: 750;
 
   letter-spacing: 2px;
+
   line-height: 1;
 }
 
@@ -459,6 +481,7 @@ h1 {
   color: var(--text);
 
   font-size: 23px;
+
   font-weight: 700;
 
   letter-spacing: -0.5px;
@@ -482,6 +505,7 @@ h1 {
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   gap: 16px;
@@ -499,6 +523,7 @@ h1 {
   text-align: center;
 
   font-size: 12px;
+
   font-weight: 650;
 }
 
@@ -566,6 +591,7 @@ h1 {
   color: var(--text-soft);
 
   font-size: 10px;
+
   font-weight: 650;
 
   cursor: pointer;
@@ -643,6 +669,7 @@ h1 {
   color: var(--text-muted);
 
   font-size: 9px;
+
   font-weight: 750;
 
   letter-spacing: 1.5px;
@@ -663,6 +690,7 @@ h1 {
   flex-direction: column;
 
   align-items: center;
+
   justify-content: center;
 
   gap: 3px;
@@ -676,6 +704,7 @@ h1 {
   color: var(--text-muted);
 
   font-size: 8px;
+
   font-weight: 700;
 
   letter-spacing: 0.6px;
@@ -687,6 +716,7 @@ h1 {
   color: var(--text-soft);
 
   font-size: 11px;
+
   font-weight: 650;
 }
 
@@ -716,6 +746,7 @@ h1 {
   color: var(--text);
 
   font-size: 13px;
+
   font-weight: 650;
 
   line-height: 1.25;
@@ -743,6 +774,7 @@ h1 {
   color: #a09e96;
 
   font-size: 8px;
+
   font-weight: 600;
 
   cursor: pointer;
@@ -858,6 +890,7 @@ h1 {
   color: var(--text);
 
   font-size: 16px;
+
   font-weight: 650;
 }
 
@@ -1203,4 +1236,4 @@ footer {
 
     animation-duration: 0.01ms !important;
   }
-}
+     }
