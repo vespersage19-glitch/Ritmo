@@ -236,6 +236,72 @@
     </section>
 
 
+    <button
+      id="historyBtn"
+      class="history-button"
+      type="button"
+      aria-expanded="false"
+      aria-controls="historyPanel"
+    >
+      View Progress &amp; History
+    </button>
+
+
+    <section
+      id="historyPanel"
+      class="history-panel"
+      hidden
+    >
+
+      <div class="history-panel-header">
+
+        <div>
+          <p class="section-label">
+            OVERVIEW
+          </p>
+
+          <h2>Progress &amp; History</h2>
+        </div>
+
+        <button
+          id="historyCloseBtn"
+          class="history-close"
+          type="button"
+        >
+          Close
+        </button>
+
+      </div>
+
+
+      <div class="history-summary">
+
+        <div class="history-stat">
+          <strong id="historyTotalHabits">0</strong>
+          <small>Habits Tracked</small>
+        </div>
+
+        <div class="history-stat">
+          <strong id="historyBestStreak">0</strong>
+          <small>Best Streak Ever</small>
+        </div>
+
+        <div class="history-stat">
+          <strong id="historyTotalCompletions">0</strong>
+          <small>Total Completions</small>
+        </div>
+
+      </div>
+
+
+      <div
+        id="historyList"
+        class="history-list"
+      ></div>
+
+    </section>
+
+
     <footer>
       Ritmo · Build your rhythm.
     </footer>
