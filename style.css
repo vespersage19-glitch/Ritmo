@@ -5,29 +5,35 @@
 }
 
 :root {
-  --bg: #f4f1ea;
-  --surface: #fffdf9;
-  --surface-soft: #f8f5ef;
-  --surface-hover: #f1eee7;
+  /* Backgrounds */
+  --bg: #08140F;
+  --surface: #10251C;
+  --surface-soft: #132A20;
+  --surface-elevated: #163126;
 
-  --border: #e5dfd4;
-  --border-strong: #d8d0c3;
+  /* Borders */
+  --border: #214033;
+  --border-strong: #2A4F3D;
 
-  --text: #252822;
-  --text-soft: #666a61;
-  --text-muted: #96988f;
+  /* Text */
+  --text: #F4F7F3;
+  --text-soft: #9BAAA1;
+  --text-muted: #6F8079;
 
-  --green: #557a68;
-  --green-dark: #3f6253;
-  --green-soft: #e8efe9;
+  /* Accent (mint/lime) — use sparingly, for progress & achievement */
+  --accent: #A8D5B5;
+  --accent-strong: #78B58A;
+  --accent-strong-hover: #66A177;
+  --accent-soft: rgba(168, 213, 181, .10);
+  --accent-soft-strong: rgba(168, 213, 181, .20);
 
-  --gold: #b28b52;
-  --gold-soft: #f3eadb;
+  /* Danger */
+  --danger: #B66B6B;
+  --danger-soft: rgba(182, 107, 107, .12);
 
-  --danger: #a85f5f;
-
-  --shadow: 0 10px 30px rgba(50,45,35,.06);
-  --shadow-strong: 0 18px 45px rgba(50,45,35,.10);
+  --shadow: 0 10px 26px rgba(0,0,0,.45);
+  --shadow-strong: 0 18px 42px rgba(0,0,0,.55);
+  --shadow-accent: 0 6px 16px rgba(168,213,181,.16);
 
   --radius-sm: 9px;
   --radius-md: 13px;
@@ -36,7 +42,7 @@
 
 html {
   background: var(--bg);
-  color-scheme: light;
+  color-scheme: dark;
   scroll-behavior: smooth;
 }
 
@@ -46,7 +52,7 @@ body {
   background:
     radial-gradient(
       circle at top right,
-      rgba(178,139,82,.08),
+      rgba(168,213,181,.05),
       transparent 32%
     ),
     var(--bg);
@@ -78,7 +84,7 @@ button {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--accent-strong);
   outline-offset: 2px;
 }
 
@@ -102,7 +108,7 @@ input:focus-visible {
 
 .eyebrow {
   margin-bottom: 11px;
-  color: var(--green);
+  color: var(--accent);
   font-size: 9px;
   font-weight: 750;
   letter-spacing: 2.6px;
@@ -114,6 +120,7 @@ h1 {
   font-weight: 500;
   letter-spacing: -4px;
   line-height: .88;
+  color: var(--text);
 }
 
 .subtitle {
@@ -155,11 +162,11 @@ h1 {
 }
 
 .progress-track {
-  stroke: #e7e1d7;
+  stroke: var(--border);
 }
 
 .progress-value {
-  stroke: var(--green);
+  stroke: var(--accent);
   stroke-linecap: round;
   transition: stroke-dashoffset 300ms ease;
 }
@@ -168,6 +175,7 @@ h1 {
   position: relative;
   font-size: 13px;
   font-weight: 700;
+  color: var(--text);
 }
 
 /* STATS */
@@ -195,7 +203,7 @@ h1 {
 
 .stat-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 35px rgba(50,45,35,.08);
+  box-shadow: 0 14px 32px rgba(0,0,0,.5);
 }
 
 .stat-icon {
@@ -212,24 +220,25 @@ h1 {
 }
 
 .stat-icon.gold {
-  color: var(--gold);
-  background: var(--gold-soft);
+  color: var(--accent-strong);
+  background: var(--accent-soft-strong);
 }
 
 .stat-icon.green {
-  color: var(--green);
-  background: var(--green-soft);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .stat-icon.neutral {
   color: var(--text-soft);
-  background: #efede8;
+  background: var(--surface-elevated);
 }
 
 .stat-card strong {
   display: block;
   font-size: 21px;
   line-height: 1;
+  color: var(--text);
 }
 
 .stat-card small {
@@ -264,9 +273,13 @@ h1 {
   box-shadow: var(--shadow);
 }
 
+#habitInput::placeholder {
+  color: var(--text-muted);
+}
+
 #habitInput:focus {
-  border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(85,122,104,.10);
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
 #addHabitBtn {
@@ -277,8 +290,8 @@ h1 {
   border: 0;
   border-radius: var(--radius-md);
 
-  background: var(--green);
-  color: white;
+  background: var(--accent-strong);
+  color: var(--bg);
 
   font-size: 12px;
   font-weight: 700;
@@ -287,7 +300,7 @@ h1 {
 }
 
 #addHabitBtn:hover {
-  background: var(--green-dark);
+  background: var(--accent-strong-hover);
 }
 
 #addHabitBtn:active {
@@ -316,7 +329,7 @@ h1 {
 
 .section-label {
   margin-bottom: 7px;
-  color: var(--green);
+  color: var(--accent);
   font-size: 9px;
   font-weight: 750;
   letter-spacing: 2px;
@@ -326,6 +339,7 @@ h1 {
 .history-panel-header h2 {
   font-size: 23px;
   letter-spacing: -.5px;
+  color: var(--text);
 }
 
 .current-date {
@@ -369,7 +383,7 @@ h1 {
 }
 
 .week-nav-button:hover {
-  background: var(--surface-hover);
+  background: var(--surface-elevated);
   color: var(--text);
 }
 
@@ -448,7 +462,7 @@ h1 {
 }
 
 .day-column.is-today {
-  background: var(--green-soft);
+  background: var(--accent-soft);
 }
 
 .day-name {
@@ -465,7 +479,7 @@ h1 {
 
 .day-column.is-today .day-name,
 .day-column.is-today .day-date {
-  color: var(--green);
+  color: var(--accent);
 }
 
 /* HABITS */
@@ -482,6 +496,7 @@ h1 {
   font-size: 13px;
   font-weight: 650;
   line-height: 1.25;
+  color: var(--text);
 }
 
 .habit-streak {
@@ -490,7 +505,7 @@ h1 {
 }
 
 .habit-streak strong {
-  color: var(--green);
+  color: var(--accent);
 }
 
 .habit-actions {
@@ -509,11 +524,11 @@ h1 {
 }
 
 .edit-button {
-  color: var(--green);
+  color: var(--accent);
 }
 
 .delete-button {
-  color: #a09e96;
+  color: var(--text-muted);
 }
 
 .delete-button:hover {
@@ -536,7 +551,7 @@ h1 {
   border-radius: 9px;
 
   background: transparent;
-  color: white;
+  color: var(--bg);
 
   cursor: pointer;
 
@@ -548,8 +563,8 @@ h1 {
 }
 
 .day-cell:hover:not(:disabled) {
-  border-color: var(--green);
-  background: var(--green-soft);
+  border-color: var(--accent-strong);
+  background: var(--accent-soft);
 }
 
 .day-cell:active:not(:disabled) {
@@ -557,14 +572,15 @@ h1 {
 }
 
 .day-cell.is-complete {
-  border-color: var(--green);
-  background: var(--green);
-  box-shadow: 0 4px 12px rgba(85,122,104,.17);
+  border-color: var(--accent);
+  background: var(--accent);
+  box-shadow: var(--shadow-accent);
 }
 
 .day-cell.is-complete .completion-tick {
   font-size: 15px;
   font-weight: 900;
+  color: var(--bg);
 }
 
 .day-cell.is-future {
@@ -585,12 +601,12 @@ h1 {
 @keyframes completionPop {
   0% {
     transform: scale(.78);
-    box-shadow: 0 0 0 0 rgba(85,122,104,0);
+    box-shadow: 0 0 0 0 rgba(168,213,181,0);
   }
 
   55% {
     transform: scale(1.12);
-    box-shadow: 0 0 0 8px rgba(85,122,104,.10);
+    box-shadow: 0 0 0 8px rgba(168,213,181,.14);
   }
 
   100% {
@@ -636,7 +652,7 @@ h1 {
   border-radius: 12px;
 
   background: var(--surface-soft);
-  color: var(--green);
+  color: var(--accent);
 
   font-size: 20px;
 }
@@ -644,6 +660,7 @@ h1 {
 .empty-state h3 {
   margin-bottom: 7px;
   font-size: 16px;
+  color: var(--text);
 }
 
 .empty-state p {
@@ -665,7 +682,7 @@ h1 {
   border-radius: var(--radius-md);
 
   background: var(--surface);
-  color: var(--green);
+  color: var(--accent);
 
   font-size: 11px;
   font-weight: 700;
@@ -675,7 +692,7 @@ h1 {
 }
 
 .history-button:hover {
-  background: var(--green-soft);
+  background: var(--accent-soft);
 }
 
 .history-panel {
@@ -740,7 +757,7 @@ h1 {
 
 .history-stat strong {
   display: block;
-  color: var(--green);
+  color: var(--accent);
   font-size: 22px;
 }
 
@@ -775,6 +792,7 @@ h1 {
 .history-habit strong {
   display: block;
   font-size: 12px;
+  color: var(--text);
 }
 
 .history-habit small {
@@ -789,7 +807,7 @@ h1 {
 }
 
 .history-streak strong {
-  color: var(--green);
+  color: var(--accent);
   font-size: 17px;
 }
 
@@ -815,8 +833,9 @@ h1 {
   max-width: calc(100vw - 28px);
   padding: 12px 14px;
 
-  background: var(--text);
-  color: white;
+  background: var(--surface-elevated);
+  color: var(--text);
+  border: 1px solid var(--border-strong);
 
   border-radius: 12px;
   box-shadow: var(--shadow-strong);
@@ -842,11 +861,11 @@ h1 {
 .ritmo-undo-toast button {
   padding: 6px 11px;
 
-  border: 1px solid rgba(255,255,255,.25);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
 
   background: transparent;
-  color: white;
+  color: var(--accent);
 
   font-size: 9px;
   font-weight: 700;
@@ -929,4 +948,4 @@ footer {
   .history-panel-header {
     align-items: flex-start;
   }
-   }
+  }
