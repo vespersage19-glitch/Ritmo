@@ -1008,3 +1008,4 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initRitmo);
 } else {
   initRitmo();
+} 
