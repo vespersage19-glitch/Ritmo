@@ -7,8 +7,8 @@
 :root {
   /* Backgrounds */
   --bg: #08140F;
+  --bg-secondary: #0C1D15;
   --surface: #10251C;
-  --surface-soft: #132A20;
   --surface-elevated: #163126;
 
   /* Borders */
@@ -20,12 +20,13 @@
   --text-soft: #9BAAA1;
   --text-muted: #6F8079;
 
-  /* Accent (mint/lime) — use sparingly, for progress & achievement */
+  /* Achievement accent (mint) — completed habits, streaks, progress */
   --accent: #A8D5B5;
-  --accent-strong: #78B58A;
-  --accent-strong-hover: #66A177;
   --accent-soft: rgba(168, 213, 181, .10);
-  --accent-soft-strong: rgba(168, 213, 181, .20);
+
+  /* Action (buttons, primary interactive) */
+  --action: #78B58A;
+  --action-hover: #66A177;
 
   /* Danger */
   --danger: #B66B6B;
@@ -33,7 +34,7 @@
 
   --shadow: 0 10px 26px rgba(0,0,0,.45);
   --shadow-strong: 0 18px 42px rgba(0,0,0,.55);
-  --shadow-accent: 0 6px 16px rgba(168,213,181,.16);
+  --glow-accent: 0 4px 14px rgba(168,213,181,.16);
 
   --radius-sm: 9px;
   --radius-md: 13px;
@@ -84,7 +85,7 @@ button {
 
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid var(--accent-strong);
+  outline: 2px solid var(--action);
   outline-offset: 2px;
 }
 
@@ -220,8 +221,8 @@ h1 {
 }
 
 .stat-icon.gold {
-  color: var(--accent-strong);
-  background: var(--accent-soft-strong);
+  color: var(--accent);
+  background: var(--accent-soft);
 }
 
 .stat-icon.green {
@@ -278,7 +279,7 @@ h1 {
 }
 
 #habitInput:focus {
-  border-color: var(--accent-strong);
+  border-color: var(--action);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
@@ -290,7 +291,7 @@ h1 {
   border: 0;
   border-radius: var(--radius-md);
 
-  background: var(--accent-strong);
+  background: var(--action);
   color: var(--bg);
 
   font-size: 12px;
@@ -300,7 +301,7 @@ h1 {
 }
 
 #addHabitBtn:hover {
-  background: var(--accent-strong-hover);
+  background: var(--action-hover);
 }
 
 #addHabitBtn:active {
@@ -375,7 +376,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 9px;
 
-  background: var(--surface-soft);
+  background: var(--surface-elevated);
   color: var(--text-soft);
 
   font-size: 20px;
@@ -383,7 +384,7 @@ h1 {
 }
 
 .week-nav-button:hover {
-  background: var(--surface-elevated);
+  background: var(--border);
   color: var(--text);
 }
 
@@ -396,7 +397,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 999px;
 
-  background: var(--surface-soft);
+  background: var(--surface-elevated);
   color: var(--text-soft);
 
   font-size: 10px;
@@ -432,7 +433,7 @@ h1 {
 
 .matrix-header {
   min-height: 55px;
-  background: var(--surface-soft);
+  background: var(--bg-secondary);
 }
 
 .habit-column {
@@ -563,7 +564,7 @@ h1 {
 }
 
 .day-cell:hover:not(:disabled) {
-  border-color: var(--accent-strong);
+  border-color: var(--action);
   background: var(--accent-soft);
 }
 
@@ -574,7 +575,7 @@ h1 {
 .day-cell.is-complete {
   border-color: var(--accent);
   background: var(--accent);
-  box-shadow: var(--shadow-accent);
+  box-shadow: var(--glow-accent);
 }
 
 .day-cell.is-complete .completion-tick {
@@ -651,7 +652,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 12px;
 
-  background: var(--surface-soft);
+  background: var(--surface-elevated);
   color: var(--accent);
 
   font-size: 20px;
@@ -733,7 +734,7 @@ h1 {
   border: 1px solid var(--border);
   border-radius: 999px;
 
-  background: var(--surface-soft);
+  background: var(--surface-elevated);
   color: var(--text-soft);
 
   font-size: 9px;
@@ -750,7 +751,7 @@ h1 {
 .history-stat {
   padding: 15px;
 
-  background: var(--surface-soft);
+  background: var(--surface-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
 }
@@ -949,3 +950,4 @@ footer {
     align-items: flex-start;
   }
   }
+  
