@@ -24,6 +24,11 @@ let previousWeekBtn, nextWeekBtn, todayBtn;
 let historyBtn, historyPanel, historyCloseBtn, historyList;
 let historyTotalHabits, historyBestStreak, historyTotalCompletions;
 
+/* Habit Details + Progress Graph state */
+let detailsOverlay, detailsCard;
+let detailsHabitId = null;
+let detailsRange = "30D";
+
 /* =========================================================
    INIT
 ========================================================= */
@@ -151,6 +156,16 @@ function setupEvents() {
         const habitId = deleteButton.dataset.habitId;
         if (habitId) {
           deleteHabit(habitId);
+        }
+        return;
+      }
+
+      const detailsButton = event.target.closest(".details-button");
+
+      if (detailsButton) {
+        const habitId = detailsButton.dataset.habitId;
+        if (habitId) {
+          openHabitDetails(habitId);
         }
       }
     });
@@ -812,8 +827,32 @@ function renderMatrix(dates) {
   /* HABIT ROWS */
 
   data.habits.forEach(habit => {
+     
 
     const row = document.createElement("div");
+    row.className = "matrix-row habit-row";
+
+    const habitColumn = document.createElement("div");
+    habitColumn.className = "habit-column";
+
+    const info = document.createElement("div");
+    info.className = "habit-info";
+
+    const name = document.createElement("span");
+    name.className = "habit-name";
+    name.textContent = habit.name;
+
+    const currentStreak = calculateCurrentStreak(habit);
+    const best = calculateBestStreak(habit);
+
+    const streak = document.createElement("span");
+    streak.className = "habit-streak";
+
+    if (currentStreak > 0) {
+      streak.innerHTML = `<strong>${currentStreak}</strong> day${currentStreak === 1 ? "" : "s"} active`;
+    } else if (best > 0) {
+      streak.innerHTML = `<st
+      const row = document.createElement("div");
     row.className = "matrix-row habit-row";
 
     const habitColumn = document.createElement("div");
@@ -848,8 +887,14 @@ function renderMatrix(dates) {
     const editButton = document.createElement("button");
     editButton.type = "button";
     editButton.className = "edit-button";
-    editButton.textConte = "Edit";
+    editButton.textContent = "Edit";
     editButton.dataset.habitId = habit.id;
+
+    const detailsButton = document.createElement("button");
+    detailsButton.type = "button";
+    detailsButton.className = "details-button";
+    detailsButton.textContent = "Details";
+    detailsButton.dataset.habitId = habit.id;
 
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
@@ -857,7 +902,7 @@ function renderMatrix(dates) {
     deleteButton.textContent = "Delete";
     deleteButton.dataset.habitId = habit.id;
 
-    actions.append(editButton, deleteButton);
+    actions.append(detailsButton, editButton, deleteButton);
 
     habitColumn.append(info, actions);
     row.appendChild(habitColumn);
@@ -870,8 +915,7 @@ function renderMatrix(dates) {
   });
 }
 
-/* 
-=========================================================
+/* =========================================================
    STATS
 ========================================================= */
 
@@ -896,8 +940,7 @@ function updateStats() {
   }
 }
 
-/*
-=========================================================
+/* =========================================================
    HISTORY PANEL
 ========================================================= */
 
@@ -931,8 +974,7 @@ function closeHistory() {
 }
 
 function renderHistory() {
-
-  if (!historyList) {
+   if (!historyList) {
     return;
   }
 
@@ -985,8 +1027,381 @@ function renderHistory() {
     historyList.appendChild(row);
   });
 }
+
+/* =========================================================
+   HABIT DETAILS — STATS
+========================================================= */
+
+function computeHabitStats(habit) {
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const created = new Date(habit.createdAt);
+  created.setHours(0, 0, 0, 0);
+
+  const daysSinceCreated = Math.max(1, Math.round((today - created) / 86400000) + 1);
+
+  const totalCompletions = countTotalCompletions(habit);
+  const completionRate = Math.round((totalCompletions / daysSinceCreated) * 100);
+
+  const currentStreak = calculateCurrentStreak(habit);
+  const bestStreakValue = calculateBestStreak(habit);
+
+  const status = computeTrendStatus(habit, daysSinceCreated, today);
+
+  return {
+    daysSinceCreated,
+    totalCompletions,
+    completionRate,
+    currentStreak,
+    bestStreak: bestStreakValue,
+    status
+  };
+}
+
 /*
-=========================================================
+  Trend logic (documented, intentionally simple):
+
+  We compare the completion rate over the most recent 14 days
+  against the 14 days immediately before that. This is a useful
+  consistency indicator, not a precise statistical model.
+
+  - Fewer than 14 days of history at all  -> "Not enough data"
+  - No earlier 14-day window to compare   -> "Not enough data"
+  - Recent rate meaningfully higher (+15 points or more) -> "Building"
+  - Recent rate meaningfully lower (-15 points or more)  -> "Declining"
+  - Otherwise                                            -> "Stable"
+*/
+
+function computeTrendStatus(habit, daysSinceCreated, today) {
+
+  const WINDOW = 14;
+  const THRESHOLD = 0.15;
+
+  if (daysSinceCreated < WINDOW) {
+    return "Not enough data";
+  }
+
+  const recentDays = Math.min(WINDOW, daysSinceCreated);
+
+  let recentDone = 0;
+
+  for (let i = 0; i < recentDays; i++) {
+    const day = addDays(today, -i);
+    if (habit.completions[getDateKey(day)] === true) {
+      recentDone++;
+    }
+  }
+
+  const recentRate = recentDone / recentDays;
+
+  const previousAvailable = Math.max(0, Math.min(WINDOW, daysSinceCreated - recentDays));
+
+  if (previousAvailable === 0) {
+    return "Not enough data";
+  }
+
+  let previousDone = 0;
+
+  for (let i = 0; i < previousAvailable; i++) {
+    const day = addDays(today, -(recentDays + i));
+    if (habit.completions[getDateKey(day)] === true) {
+      previousDone++;
+    }
+  }
+
+  const previousRate = previousDone / previousAvailable;
+  const difference = recentRate - previousRate;
+
+  if (difference >= THRESHOLD) {
+    return "Building";
+  }
+
+  if (difference <= -THRESHOLD) {
+    return "Declining";
+  }
+
+  return "Stable";
+}
+
+function statusMeta(status) {
+
+  switch (status) {
+
+    case "Building":
+      return { label: "Building", className: "status-building" };
+
+    case "Declining":
+      return { label: "Declining", className: "status-declining" };
+
+    case "Stable":
+      return { label: "Stable", className: "status-stable" };
+
+    default:
+      return { label: "Not enough data", className: "status-unknown" };
+  }
+}
+
+/* =========================================================
+   HABIT DETAILS — GRAPH
+========================================================= */
+
+const GRAPH_RANGE_DAYS = { "7D": 7, "30D": 30, "90D": 90 };
+const GRAPH_MAX_BUCKETS = 30;
+
+function getGraphRangeDays(rangeKey, habit, today) {
+
+  if (rangeKey === "All") {
+
+    const created = new Date(habit.createdAt);
+    created.setHours(0, 0, 0, 0);
+
+    return Math.max(1, Math.round((today - created) / 86400000) + 1);
+  }
+
+  return GRAPH_RANGE_DAYS[rangeKey] || 30;
+}
+
+function buildGraphBuckets(habit, rangeKey) {
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const totalDays = getGraphRangeDays(rangeKey, habit, today);
+  const bucketSize = Math.max(1, Math.ceil(totalDays / GRAPH_MAX_BUCKETS));
+  const bucketCount = Math.ceil(totalDays / bucketSize);
+
+  const buckets = [];
+
+  /* Build oldest-first so bars read left (past) to right (today). */
+  for (let bucket = bucketCount - 1; bucket >= 0; bucket--) {
+
+    const bucketStartOffset = bucket * bucketSize;
+
+    let done = 0;
+    let counted = 0;
+    let includesToday = false;
+
+    for (let i = 0; i < bucketSize; i++) {
+
+      const offset = bucketStartOffset + i;
+
+      if (offset >= totalDays) {
+        break;
+      }
+
+      const day = addDays(today, -offset);
+      counted++;
+
+      if (offset === 0) {
+        includesToday = true;
+      }
+
+      if (habit.completions[getDateKey(day)] === true) {
+        done++;
+      }
+    }
+
+    if (counted === 0) {
+      continue;
+    }
+
+    buckets.push({
+      rate: done / counted,
+      isToday: includesToday
+    });
+  }
+
+  const startLabel = formatDate(addDays(today, -(totalDays - 1)));
+
+  return { buckets, startLabel, endLabel: "Today" };
+}
+
+/* =========================================================
+   HABIT DETAILS — MODAL
+========================================================= */
+
+function ensureHabitDetailsOverlay() {
+
+  if (detailsOverlay) {
+    return;
+  }
+
+  detailsOverlay = document.createElement("div");
+  detailsOverlay.className = "habit-details-overlay";
+
+  detailsCard = document.createElement("div");
+  detailsCard.className = "habit-details-card";
+
+  detailsCard.innerHTML = `
+    <div class="habit-details-header">
+      <div>
+        <p class="section-label">HABIT DETAILS</p>
+        <h2 class="habit-details-title"></h2>
+      </div>
+      <button type="button" class="history-close habit-details-close">Close</button>
+    </div>
+
+    <span class="habit-details-status"></span>
+    <p class="current-date habit-details-meta"></p>
+
+    <div class="habit-details-stats">
+      <div class="history-stat">
+        <strong class="hd-current-streak">0</strong>
+        <small>Current Streak</small>
+      </div>
+      <div class="history-stat">
+        <strong class="hd-best-streak">0</strong>
+        <small>Best Streak</small>
+      </div>
+      <div class="history-stat">
+        <strong class="hd-total-completions">0</strong>
+        <small>Total Completions</small>
+      </div>
+      <div class="history-stat">
+        <strong class="hd-completion-rate">0%</strong>
+        <small>Completion Rate</small>
+      </div>
+    </div>
+
+    <p class="section-label">CONSISTENCY</p>
+
+    <div class="graph-range-selector">
+      <button type="button" class="range-button" data-range="7D">7D</button>
+      <button type="button" class="range-button" data-range="30D">30D</button>
+      <button type="button" class="range-button" data-range="90D">90D</button>
+      <button type="button" class="range-button" data-range="All">All</button>
+    </div>
+
+    <div class="graph-wrap">
+      <div class="graph-bars"></div>
+      <div class="graph-labels">
+        <span class="graph-label-start"></span>
+        <span class="graph-label-end"></span>
+      </div>
+    </div>
+  `;
+
+  detailsOverlay.appendChild(detailsCard);
+  document.body.appendChild(detailsOverlay);
+
+  detailsOverlay.addEventListener("click", event => {
+    if (event.target === detailsOverlay) {
+      closeHabitDetails();
+    }
+  });
+
+  detailsCard.querySelector(".habit-details-close").addEventListener("click", closeHabitDetails);
+
+  detailsCard.querySelector(".graph-range-selector").addEventListener("click", event => {
+
+    const button = event.target.closest(".range-button");
+
+    if (button) {
+      selectDetailsRange(button.dataset.range);
+    }
+  });
+}
+
+function openHabitDetails(habitId) {
+
+  ensureHabitDetailsOverlay();
+
+  detailsHabitId = habitId;
+  detailsRange = "30D";
+
+  renderHabitDetails();
+
+  detailsOverlay.classList.add("is-visible");
+}
+
+function closeHabitDetails() {
+
+  if (!detailsOverlay) {
+    return;
+  }
+
+  detailsOverlay.classList.remove("is-visible");
+  detailsHabitId = null;
+}
+
+function selectDetailsRange(rangeKey) {
+
+  if (!rangeKey || rangeKey === detailsRange) {
+    return;
+  }
+
+  detailsRange = rangeKey;
+  renderHabitDetails();
+}
+
+function renderHabitDetails() {
+
+  if (!detailsHabitId) {
+    return;
+  }
+
+  const habit = data.habits.find(item => item.id === detailsHabitId);
+
+  if (!habit) {
+    closeHabitDetails();
+    return;
+  }
+
+  const stats = computeHabitStats(habit);
+  const meta = statusMeta(stats.status);
+
+  detailsCard.querySelector(".habit-details-title").textContent = habit.name;
+
+  const statusEl = detailsCard.querySelector(".habit-details-status");
+  statusEl.textContent = meta.label;
+  statusEl.className = `habit-details-status ${meta.className}`;
+
+  detailsCard.querySelector(".habit-details-meta").textContent =
+    `Started ${stats.daysSinceCreated} day${stats.daysSinceCreated === 1 ? "" : "s"} ago`;
+
+  detailsCard.querySelector(".hd-current-streak").textContent = stats.currentStreak;
+  detailsCard.querySelector(".hd-best-streak").textContent = stats.bestStreak;
+  detailsCard.querySelector(".hd-total-completions").textContent = stats.totalCompletions;
+  detailsCard.querySelector(".hd-completion-rate").textContent = `${stats.completionRate}%`;
+
+  detailsCard.querySelectorAll(".range-button").forEach(button => {
+    button.classList.toggle("is-active", button.dataset.range === detailsRange);
+  });
+
+  renderDetailsGraph(habit);
+}
+
+function renderDetailsGraph(habit) {
+
+  const { buckets, startLabel, endLabel } = buildGraphBuckets(habit, detailsRange);
+
+  const barsContainer = detailsCard.querySelector(".graph-bars");
+  barsContainer.innerHTML = "";
+
+  buckets.forEach(bucket => {
+
+    const track = document.createElement("div");
+    track.className = "graph-bar";
+
+    if (bucket.isToday) {
+      track.classList.add("is-today-bucket");
+    }
+
+    const fill = document.createElement("div");
+    fill.className = "graph-bar-fill";
+    fill.style.height = `${Math.round(bucket.rate * 100)}%`;
+
+    track.appendChild(fill);
+    barsContainer.appendChild(track);
+  });
+
+  detailsCard.querySelector(".graph-label-start").textContent = startLabel;
+  detailsCard.querySelector(".graph-label-end").textContent = endLabel;
+}
+
+/* =========================================================
    RENDER
 ========================================================= */
 
@@ -998,6 +1413,10 @@ function render() {
   if (historyOpen) {
     renderHistory();
   }
+
+  if (detailsHabitId) {
+    renderHabitDetails();
+  }
 }
 
 /* =========================================================
@@ -1008,4 +1427,6 @@ if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", initRitmo);
 } else {
   initRitmo();
-} 
+}
+   
+   
