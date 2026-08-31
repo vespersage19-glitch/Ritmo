@@ -949,5 +949,213 @@ footer {
   .history-panel-header {
     align-items: flex-start;
   }
+}
+
+/* =========================================================
+   HABIT DETAILS + PROGRESS GRAPH (added)
+   New rules only \u2014 nothing above this line was changed.
+========================================================= */
+
+.details-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 8px;
+  cursor: pointer;
+  color: var(--text-soft);
+}
+
+.details-button:hover {
+  color: var(--accent);
+}
+
+.habit-details-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(4, 10, 7, .66);
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity .18s ease;
+}
+
+.habit-details-overlay.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.habit-details-card {
+  width: 100%;
+  max-width: 420px;
+  max-height: 85vh;
+
+  overflow-y: auto;
+  padding: 24px 20px;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-strong);
+}
+
+.habit-details-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.habit-details-title {
+  font-size: 20px;
+  letter-spacing: -.4px;
+  color: var(--text);
+}
+
+.habit-details-status {
+  display: inline-block;
+  margin-bottom: 10px;
+  padding: 5px 11px;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .4px;
+}
+
+.habit-details-status.status-building {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.habit-details-status.status-stable {
+  color: var(--text-soft);
+  background: var(--surface-elevated);
+}
+
+.habit-details-status.status-declining {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-color: var(--danger);
+}
+
+.habit-details-status.status-unknown {
+  color: var(--text-muted);
+  background: var(--surface-elevated);
+}
+
+.habit-details-meta {
+  margin-bottom: 16px;
+}
+
+.habit-details-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.graph-range-selector {
+  display: flex;
+  gap: 7px;
+  margin: 10px 0 16px;
+}
+
+.range-button {
+  flex: 1;
+  padding: 7px 0;
+
+  border: 1px solid var(--border);
+  border-radius: 999px;
+
+  background: var(--surface-elevated);
+  color: var(--text-soft);
+
+  font-size: 10px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.range-button.is-active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.graph-wrap {
+  margin-top: 4px;
+}
+
+.graph-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+
+  height: 110px;
+  padding: 8px 0;
+}
+
+.graph-bar {
+  position: relative;
+  flex: 1;
+  height: 100%;
+
+  background: var(--surface-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.graph-bar.is-today-bucket {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.graph-bar-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+
+  background: var(--accent);
+  border-radius: 3px 3px 0 0;
+}
+
+.graph-labels {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  margin-top: 8px;
+
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+@media (max-width: 650px) {
+
+  .habit-details-card {
+    padding: 20px 16px;
+    max-height: 88vh;
   }
-  
+
+  .habit-details-stats {
+    gap: 8px;
+  }
+
+  .graph-bars {
+    height: 90px;
+  }
+             }
+
