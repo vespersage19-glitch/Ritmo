@@ -1428,5 +1428,3 @@ if (document.readyState === "loading") {
 } else {
   initRitmo();
 }
-   
-   
