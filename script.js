@@ -27,7 +27,6 @@ let historyTotalHabits, historyBestStreak, historyTotalCompletions;
 /* Habit Details + Progress Graph state */
 let detailsOverlay, detailsCard;
 let detailsHabitId = null;
-let detailsRange = "30D";
 
 /* =========================================================
    INIT
@@ -1038,61 +1037,54 @@ function computeHabitStats(habit) {
 }
 
 /*
-  Trend logic (documented, intentionally simple):
+  Trend logic — exact deterministic algorithm:
 
-  We compare the completion rate over the most recent 14 days
-  against the 14 days immediately before that. This is a useful
-  consistency indicator, not a precise statistical model.
-
-  - Fewer than 14 days of history at all  -> "Not enough data"
-  - No earlier 14-day window to compare   -> "Not enough data"
-  - Recent rate meaningfully higher (+15 points or more) -> "Building"
-  - Recent rate meaningfully lower (-15 points or more)  -> "Declining"
-  - Otherwise                                            -> "Stable"
+  1. Build the full chronological daily series for the habit, from its
+     creation date through today. Each day contributes 100 (completed)
+     or 0 (not completed) — no invented or estimated values.
+  2. Split that series into a chronological first half and second half.
+  3. Compare the average of the second half to the average of the
+     first half.
+  4. difference >= +10 points -> "Improving"
+     difference <= -10 points -> "Declining"
+     otherwise                -> "Stable"
+  5. Fewer than MIN_DAYS days of recorded history (so each half would
+     have less than 2 days) -> "Not enough data".
 */
+
+function averageOf(values) {
+
+  if (!values.length) {
+    return 0;
+  }
+
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
 
 function computeTrendStatus(habit, daysSinceCreated, today) {
 
-  const WINDOW = 14;
-  const THRESHOLD = 0.15;
+  const MIN_DAYS = 4;
+  const THRESHOLD = 10;
 
-  if (daysSinceCreated < WINDOW) {
+  if (daysSinceCreated < MIN_DAYS) {
     return "Not enough data";
   }
 
-  const recentDays = Math.min(WINDOW, daysSinceCreated);
+  const series = [];
 
-  let recentDone = 0;
-
-  for (let i = 0; i < recentDays; i++) {
+  for (let i = daysSinceCreated - 1; i >= 0; i--) {
     const day = addDays(today, -i);
-    if (habit.completions[getDateKey(day)] === true) {
-      recentDone++;
-    }
+    series.push(habit.completions[getDateKey(day)] === true ? 100 : 0);
   }
 
-  const recentRate = recentDone / recentDays;
+  const halfSize = Math.floor(series.length / 2);
+  const firstHalf = series.slice(0, halfSize);
+  const secondHalf = series.slice(series.length - halfSize);
 
-  const previousAvailable = Math.max(0, Math.min(WINDOW, daysSinceCreated - recentDays));
-
-  if (previousAvailable === 0) {
-    return "Not enough data";
-  }
-
-  let previousDone = 0;
-
-  for (let i = 0; i < previousAvailable; i++) {
-    const day = addDays(today, -(recentDays + i));
-    if (habit.completions[getDateKey(day)] === true) {
-      previousDone++;
-    }
-  }
-
-  const previousRate = previousDone / previousAvailable;
-  const difference = recentRate - previousRate;
+  const difference = averageOf(secondHalf) - averageOf(firstHalf);
 
   if (difference >= THRESHOLD) {
-    return "Building";
+    return "Improving";
   }
 
   if (difference <= -THRESHOLD) {
@@ -1106,17 +1098,17 @@ function statusMeta(status) {
 
   switch (status) {
 
-    case "Building":
-      return { label: "Building", className: "status-building" };
+    case "Improving":
+      return { label: "↑ Improving", className: "status-building" };
 
     case "Declining":
-      return { label: "Declining", className: "status-declining" };
+      return { label: "↓ Declining", className: "status-declining" };
 
     case "Stable":
-      return { label: "Stable", className: "status-stable" };
+      return { label: "→ Stable", className: "status-stable" };
 
     default:
-      return { label: "Not enough data", className: "status-unknown" };
+      return { label: "→ Not enough data", className: "status-unknown" };
   }
 }
 
@@ -1124,75 +1116,52 @@ function statusMeta(status) {
    HABIT DETAILS — GRAPH
 ========================================================= */
 
-const GRAPH_RANGE_DAYS = { "7D": 7, "30D": 30, "90D": 90 };
-const GRAPH_MAX_BUCKETS = 30;
+const GRAPH_SVG_WIDTH = 300;
+const GRAPH_SVG_HEIGHT = 140;
+const GRAPH_PADDING = 10;
+const GRAPH_ROLLING_WINDOW = 7;
 
-function getGraphRangeDays(rangeKey, habit, today) {
+/*
+  Builds the complete recorded history for a habit, from its creation
+  date through today — no range selection, no fake/estimated days.
 
-  if (rangeKey === "All") {
-
-    const created = new Date(habit.createdAt);
-    created.setHours(0, 0, 0, 0);
-
-    return Math.max(1, Math.round((today - created) / 86400000) + 1);
-  }
-
-  return GRAPH_RANGE_DAYS[rangeKey] || 30;
-}
-
-function buildGraphBuckets(habit, rangeKey) {
+  Each day's real completion (0 or 100) is kept as its own data point
+  (every actual day is represented). The plotted value is a trailing
+  rolling average of those real values, which is what turns a boolean
+  daily record into a readable rising/falling line — it is a derived
+  statistic of real data, never invented data.
+*/
+function buildGraphSeries(habit) {
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const totalDays = getGraphRangeDays(rangeKey, habit, today);
-  const bucketSize = Math.max(1, Math.ceil(totalDays / GRAPH_MAX_BUCKETS));
-  const bucketCount = Math.ceil(totalDays / bucketSize);
+  const created = new Date(habit.createdAt);
+  created.setHours(0, 0, 0, 0);
 
-  const buckets = [];
+  const totalDays = Math.max(1, Math.round((today - created) / 86400000) + 1);
 
-  /* Build oldest-first so bars read left (past) to right (today). */
-  for (let bucket = bucketCount - 1; bucket >= 0; bucket--) {
+  const raw = [];
 
-    const bucketStartOffset = bucket * bucketSize;
-
-    let done = 0;
-    let counted = 0;
-    let includesToday = false;
-
-    for (let i = 0; i < bucketSize; i++) {
-
-      const offset = bucketStartOffset + i;
-
-      if (offset >= totalDays) {
-        break;
-      }
-
-      const day = addDays(today, -offset);
-      counted++;
-
-      if (offset === 0) {
-        includesToday = true;
-      }
-
-      if (habit.completions[getDateKey(day)] === true) {
-        done++;
-      }
-    }
-
-    if (counted === 0) {
-      continue;
-    }
-
-    buckets.push({
-      rate: done / counted,
-      isToday: includesToday
-    });
+  for (let i = totalDays - 1; i >= 0; i--) {
+    const day = addDays(today, -i);
+    raw.push(habit.completions[getDateKey(day)] === true ? 100 : 0);
   }
 
-  const startLabel = formatDate(addDays(today, -(totalDays - 1)));
+  const points = raw.map((_, index) => {
 
-  return { buckets, startLabel, endLabel: "Today" };
+    const windowStart = Math.max(0, index - (GRAPH_ROLLING_WINDOW - 1));
+    const windowSlice = raw.slice(windowStart, index + 1);
+    const rate = windowSlice.reduce((sum, value) => sum + value, 0) / windowSlice.length;
+
+    return { rate };
+  });
+
+  return {
+    points,
+    startLabel: formatDate(created),
+    endLabel: "Today"
+  };
 }
 
 /* =========================================================
@@ -1244,15 +1213,8 @@ function ensureHabitDetailsOverlay() {
 
     <p class="section-label">CONSISTENCY</p>
 
-    <div class="graph-range-selector">
-      <button type="button" class="range-button" data-range="7D">7D</button>
-      <button type="button" class="range-button" data-range="30D">30D</button>
-      <button type="button" class="range-button" data-range="90D">90D</button>
-      <button type="button" class="range-button" data-range="All">All</button>
-    </div>
-
     <div class="graph-wrap">
-      <div class="graph-bars"></div>
+      <svg class="graph-svg" viewBox="0 0 ${GRAPH_SVG_WIDTH} ${GRAPH_SVG_HEIGHT}" preserveAspectRatio="none"></svg>
       <div class="graph-labels">
         <span class="graph-label-start"></span>
         <span class="graph-label-end"></span>
@@ -1270,15 +1232,6 @@ function ensureHabitDetailsOverlay() {
   });
 
   detailsCard.querySelector(".habit-details-close").addEventListener("click", closeHabitDetails);
-
-  detailsCard.querySelector(".graph-range-selector").addEventListener("click", event => {
-
-    const button = event.target.closest(".range-button");
-
-    if (button) {
-      selectDetailsRange(button.dataset.range);
-    }
-  });
 }
 
 function openHabitDetails(habitId) {
@@ -1286,7 +1239,6 @@ function openHabitDetails(habitId) {
   ensureHabitDetailsOverlay();
 
   detailsHabitId = habitId;
-  detailsRange = "30D";
 
   renderHabitDetails();
 
@@ -1301,16 +1253,6 @@ function closeHabitDetails() {
 
   detailsOverlay.classList.remove("is-visible");
   detailsHabitId = null;
-}
-
-function selectDetailsRange(rangeKey) {
-
-  if (!rangeKey || rangeKey === detailsRange) {
-    return;
-  }
-
-  detailsRange = rangeKey;
-  renderHabitDetails();
 }
 
 function renderHabitDetails() {
@@ -1343,42 +1285,123 @@ function renderHabitDetails() {
   detailsCard.querySelector(".hd-total-completions").textContent = stats.totalCompletions;
   detailsCard.querySelector(".hd-completion-rate").textContent = `${stats.completionRate}%`;
 
-  detailsCard.querySelectorAll(".range-button").forEach(button => {
-    button.classList.toggle("is-active", button.dataset.range === detailsRange);
-  });
-
   renderDetailsGraph(habit);
+}
+
+/*
+  Injects one small stylesheet, once, purely from JavaScript, so the
+  new SVG line graph renders correctly without editing style.css.
+  Colors reference the existing --accent theme variable (with a
+  fallback) so it inherits Ritmo's real theme wherever that variable
+  is defined.
+*/
+function ensureGraphStyles() {
+
+  if (document.getElementById("ritmoGraphStyles")) {
+    return;
+  }
+
+  const style = document.createElement("style");
+  style.id = "ritmoGraphStyles";
+  style.textContent = `
+    .graph-svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+    }
+    .graph-grid-line {
+      stroke: rgba(255, 255, 255, 0.08);
+      stroke-width: 1;
+    }
+    .graph-axis-label {
+      fill: rgba(255, 255, 255, 0.45);
+      font-size: 7px;
+    }
+    .graph-line {
+      fill: none;
+      stroke: var(--accent, #22c55e);
+      stroke-width: 2;
+      stroke-linejoin: round;
+      stroke-linecap: round;
+    }
+    .graph-dot {
+      fill: var(--accent, #22c55e);
+      opacity: 0.5;
+    }
+    .graph-dot-current {
+      opacity: 1;
+    }
+    .graph-empty-label {
+      fill: rgba(255, 255, 255, 0.45);
+      font-size: 10px;
+      text-anchor: middle;
+    }
+  `;
+
+  document.head.appendChild(style);
 }
 
 function renderDetailsGraph(habit) {
 
-  const { buckets, startLabel, endLabel } = buildGraphBuckets(habit, detailsRange);
+  ensureGraphStyles();
 
-  const barsContainer = detailsCard.querySelector(".graph-bars");
-  barsContainer.innerHTML = "";
+  const { points, startLabel, endLabel } = buildGraphSeries(habit);
 
-  buckets.forEach(bucket => {
+  const svg = detailsCard.querySelector(".graph-svg");
+  const startLabelEl = detailsCard.querySelector(".graph-label-start");
+  const endLabelEl = detailsCard.querySelector(".graph-label-end");
 
-    const track = document.createElement("div");
-    track.className = "graph-bar";
+  if (!svg) {
+    return;
+  }
 
-    if (bucket.isToday) {
-      track.classList.add("is-today-bucket");
+  if (!points.length) {
+    svg.innerHTML = `<text x="${GRAPH_SVG_WIDTH / 2}" y="${GRAPH_SVG_HEIGHT / 2}" class="graph-empty-label">No progress data yet</text>`;
+    if (startLabelEl) startLabelEl.textContent = "";
+    if (endLabelEl) endLabelEl.textContent = "";
+    return;
+  }
+
+  const plotWidth = GRAPH_SVG_WIDTH - GRAPH_PADDING * 2;
+  const plotHeight = GRAPH_SVG_HEIGHT - GRAPH_PADDING * 2;
+
+  const xFor = index => {
+    if (points.length === 1) {
+      return GRAPH_PADDING + plotWidth / 2;
     }
+    return GRAPH_PADDING + (index / (points.length - 1)) * plotWidth;
+  };
 
-    const fill = document.createElement("div");
-    fill.className = "graph-bar-fill";
-    fill.style.height = `${Math.round(bucket.rate * 100)}%`;
+  const yFor = rate => GRAPH_PADDING + (1 - rate / 100) * plotHeight;
 
-    track.appendChild(fill);
-    barsContainer.appendChild(track);
-  });
+  const gridMarkup = [0, 25, 50, 75, 100]
+    .map(mark => {
+      const y = yFor(mark).toFixed(2);
+      return `<line x1="${GRAPH_PADDING}" y1="${y}" x2="${GRAPH_SVG_WIDTH - GRAPH_PADDING}" y2="${y}" class="graph-grid-line" /><text x="1" y="${(Number(y) + 3).toFixed(2)}" class="graph-axis-label">${mark}%</text>`;
+    })
+    .join("");
 
-  detailsCard.querySelector(".graph-label-start").textContent = startLabel;
-  detailsCard.querySelector(".graph-label-end").textContent = endLabel;
+  const lineMarkup = points.length > 1
+    ? `<polyline class="graph-line" points="${points
+        .map((point, index) => `${xFor(index).toFixed(2)},${yFor(point.rate).toFixed(2)}`)
+        .join(" ")}" />`
+    : "";
+
+  const dotsMarkup = points
+    .map((point, index) => {
+      const isLast = index === points.length - 1;
+      const radius = isLast ? 3 : 1.4;
+      return `<circle cx="${xFor(index).toFixed(2)}" cy="${yFor(point.rate).toFixed(2)}" r="${radius}" class="graph-dot${isLast ? " graph-dot-current" : ""}" />`;
+    })
+    .join("");
+
+  svg.innerHTML = `${gridMarkup}${lineMarkup}${dotsMarkup}`;
+
+  if (startLabelEl) startLabelEl.textContent = startLabel;
+  if (endLabelEl) endLabelEl.textContent = points.length > 1 ? endLabel : "Not enough data";
 }
-
-/* =========================================================
+      /* =========================================================
    RENDER
 ========================================================= */
 
@@ -1405,3 +1428,4 @@ if (document.readyState === "loading") {
 } else {
   initRitmo();
 }
+   
