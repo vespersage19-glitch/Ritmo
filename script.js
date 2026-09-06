@@ -892,8 +892,7 @@ function renderMatrix(dates) {
 
 /* =========================================================
    STATS
-========================================================= */
-
+======================================================== */
 function updateStats() {
 
   const todayKey = getDateKey();
@@ -1112,7 +1111,8 @@ function statusMeta(status) {
   }
 }
 
-/* =========================================================
+/*
+=================
    HABIT DETAILS — GRAPH
 ========================================================= */
 
@@ -1401,7 +1401,424 @@ function renderDetailsGraph(habit) {
   if (startLabelEl) startLabelEl.textContent = startLabel;
   if (endLabelEl) endLabelEl.textContent = points.length > 1 ? endLabel : "Not enough data";
 }
-      /* =========================================================
+
+/* =========================================================
+   MONTHLY TRACKING — DATE HELPERS
+========================================================= */
+
+function startOfMonth(date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function getMonthDayCount(monthStart) {
+  return new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0).getDate();
+}
+
+function formatMonthLabel(monthStart) {
+  return monthStart.toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+}
+
+/*
+  Only days that have actually occurred (up to today) count toward
+  monthly stats — future days have no completion data and must not
+  be treated as "missed" or counted as possible actions yet.
+*/
+function getElapsedMonthDays(monthStart) {
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const totalDays = getMonthDayCount(monthStart);
+  const days = [];
+
+  for (let i = 0; i < totalDays; i++) {
+    const day = addDays(monthStart, i);
+    if (day > today) {
+      break;
+    }
+    days.push(day);
+  }
+
+  return days;
+}
+
+/* =========================================================
+   MONTHLY TRACKING — STATS
+========================================================= */
+
+function computeMonthlyStats(monthStart) {
+
+  const elapsedDays = getElapsedMonthDays(monthStart);
+  const habits = data.habits;
+
+  const perDay = elapsedDays.map(day => {
+
+    const dateKey = getDateKey(day);
+    const total = habits.length;
+    const done = habits.filter(habit => habit.completions[dateKey] === true).length;
+
+    return {
+      date: day,
+      dateKey,
+      done,
+      total,
+      rate: total === 0 ? 0 : done / total
+    };
+  });
+
+  const totalPossible = perDay.reduce((sum, entry) => sum + entry.total, 0);
+  const totalCompleted = perDay.reduce((sum, entry) => sum + entry.done, 0);
+  const completionPercent = totalPossible === 0
+    ? 0
+    : Math.round((totalCompleted / totalPossible) * 100);
+
+  let bestDay = null;
+  let worstDay = null;
+
+  perDay.forEach(entry => {
+
+    if (entry.total === 0) {
+      return;
+    }
+
+    if (!bestDay || entry.rate > bestDay.rate) {
+      bestDay = entry;
+    }
+
+    if (!worstDay || entry.rate < worstDay.rate) {
+      worstDay = entry;
+    }
+  });
+
+  const perHabit = habits.map(habit => {
+
+    const doneCount = elapsedDays.filter(
+      day => habit.completions[getDateKey(day)] === true
+    ).length;
+
+    const rate = elapsedDays.length === 0
+      ? 0
+      : Math.round((doneCount / elapsedDays.length) * 100);
+
+    return {
+      id: habit.id,
+      name: habit.name,
+      completed: doneCount,
+      possible: elapsedDays.length,
+      rate
+    };
+  });
+
+  return {
+    perDay,
+    totalPossible,
+    totalCompleted,
+    completionPercent,
+    bestDay,
+    worstDay,
+    perHabit,
+    hasAnyHabits: habits.length > 0,
+    hasElapsedDays: elapsedDays.length > 0
+  };
+}
+
+/* =========================================================
+   MONTHLY TRACKING — NAVIGATION
+========================================================= */
+
+function goToPreviousMonth() {
+  viewedMonthStart = new Date(viewedMonthStart.getFullYear(), viewedMonthStart.getMonth() - 1, 1);
+  renderMonthlyView();
+}
+
+function goToNextMonth() {
+  viewedMonthStart = new Date(viewedMonthStart.getFullYear(), viewedMonthStart.getMonth() + 1, 1);
+  renderMonthlyView();
+}
+
+function goToThisMonth() {
+  viewedMonthStart = startOfMonth(new Date());
+  renderMonthlyView();
+}
+
+/* =========================================================
+   MONTHLY TRACKING — OVERLAY (JS-created, like the habit
+   details overlay — index.html and style.css are not touched)
+========================================================= */
+
+function ensureMonthlyStyles() {
+
+  if (document.getElementById("ritmoMonthlyStyles")) {
+    return;
+  }
+
+  const style = document.createElement("style");
+  style.id = "ritmoMonthlyStyles";
+  style.textContent = `
+    .month-nav {
+      display: flex;
+      gap: 8px;
+      margin: 12px 0;
+    }
+    .month-nav button {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: none;
+      border-radius: 8px;
+      padding: 8px 6px;
+      color: inherit;
+      font-size: 13px;
+    }
+    .month-nav button:disabled {
+      opacity: 0.4;
+    }
+    .month-calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+      margin: 8px 0 16px;
+    }
+    .month-day-cell {
+      aspect-ratio: 1 / 1;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .month-day-cell.is-empty {
+      background: transparent;
+    }
+    .month-day-cell.is-future {
+      opacity: 0.35;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .month-habit-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 13px;
+    }
+    .month-empty-note {
+      opacity: 0.6;
+      font-size: 13px;
+      padding: 12px 0;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+function ensureMonthlyOverlay() {
+
+  if (monthOverlay) {
+    return;
+  }
+
+  monthOverlay = document.createElement("div");
+  monthOverlay.className = "habit-details-overlay";
+
+  monthCard = document.createElement("div");
+  monthCard.className = "habit-details-card";
+
+  monthCard.innerHTML = `
+    <div class="habit-details-header">
+      <div>
+        <p class="section-label">MONTHLY TRACKING</p>
+        <h2 class="habit-details-title month-title"></h2>
+      </div>
+      <button type="button" class="history-close month-close">Close</button>
+    </div>
+
+    <div class="month-nav">
+      <button type="button" class="month-prev">‹ Prev</button>
+      <button type="button" class="month-today">This Month</button>
+      <button type="button" class="month-next">Next ›</button>
+    </div>
+
+    <div class="habit-details-stats month-stats">
+      <div class="history-stat">
+        <strong class="month-completion-rate">0%</strong>
+        <small>Completion Rate</small>
+      </div>
+      <div class="history-stat">
+        <strong class="month-total-completed">0</strong>
+        <small>Completed Actions</small>
+      </div>
+      <div class="history-stat">
+        <strong class="month-total-possible">0</strong>
+        <small>Possible Actions</small>
+      </div>
+      <div class="history-stat">
+        <strong class="month-best-day">–</strong>
+        <small>Best Day</small>
+      </div>
+      <div class="history-stat">
+        <strong class="month-worst-day">–</strong>
+        <small>Worst Day</small>
+      </div>
+    </div>
+
+    <p class="section-label">CALENDAR</p>
+    <div class="month-calendar"></div>
+
+    <p class="section-label">HABIT BREAKDOWN</p>
+    <div class="month-habit-list"></div>
+  `;
+
+  monthOverlay.appendChild(monthCard);
+  document.body.appendChild(monthOverlay);
+
+  monthOverlay.addEventListener("click", event => {
+    if (event.target === monthOverlay) {
+      closeMonthlyView();
+    }
+  });
+
+  monthCard.querySelector(".month-close").addEventListener("click", closeMonthlyView);
+  monthCard.querySelector(".month-prev").addEventListener("click", goToPreviousMonth);
+  monthCard.querySelector(".month-next").addEventListener("click", goToNextMonth);
+  monthCard.querySelector(".month-today").addEventListener("click", goToThisMonth);
+}
+
+function openMonthlyView() {
+
+  ensureMonthlyOverlay();
+
+  monthOpen = true;
+  viewedMonthStart = startOfMonth(new Date());
+
+  renderMonthlyView();
+
+  monthOverlay.classList.add("is-visible");
+}
+
+function closeMonthlyView() {
+
+  if (!monthOverlay) {
+    return;
+  }
+
+  monthOverlay.classList.remove("is-visible");
+  monthOpen = false;
+}
+/* =========================================================
+   MONTHLY TRACKING — RENDER
+========================================================= */
+
+function renderMonthlyView() {
+
+  if (!monthOverlay || !viewedMonthStart) {
+    return;
+  }
+
+  ensureMonthlyStyles();
+
+  const stats = computeMonthlyStats(viewedMonthStart);
+
+  monthCard.querySelector(".month-title").textContent = formatMonthLabel(viewedMonthStart);
+
+  const thisMonthStart = startOfMonth(new Date());
+  const isCurrentMonth = thisMonthStart.getTime() === viewedMonthStart.getTime();
+  monthCard.querySelector(".month-today").disabled = isCurrentMonth;
+
+  monthCard.querySelector(".month-completion-rate").textContent = `${stats.completionPercent}%`;
+  monthCard.querySelector(".month-total-completed").textContent = stats.totalCompleted;
+  monthCard.querySelector(".month-total-possible").textContent = stats.totalPossible;
+
+  monthCard.querySelector(".month-best-day").textContent = stats.bestDay
+    ? formatDate(stats.bestDay.date)
+    : "–";
+
+  monthCard.querySelector(".month-worst-day").textContent = stats.worstDay
+    ? formatDate(stats.worstDay.date)
+    : "–";
+
+  renderMonthlyCalendar(stats);
+  renderMonthlyHabitBreakdown(stats);
+}
+
+function renderMonthlyCalendar(stats) {
+
+  const container = monthCard.querySelector(".month-calendar");
+  container.innerHTML = "";
+
+  if (!stats.hasAnyHabits) {
+    container.innerHTML = `<div class="month-empty-note">No habits tracked yet.</div>`;
+    return;
+  }
+
+  const totalDaysInMonth = getMonthDayCount(viewedMonthStart);
+  const leadingBlanks = viewedMonthStart.getDay();
+
+  for (let i = 0; i < leadingBlanks; i++) {
+    const blank = document.createElement("div");
+    blank.className = "month-day-cell is-empty";
+    container.appendChild(blank);
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  for (let dayNum = 1; dayNum <= totalDaysInMonth; dayNum++) {
+
+    const date = new Date(viewedMonthStart.getFullYear(), viewedMonthStart.getMonth(), dayNum);
+    const cell = document.createElement("div");
+    cell.className = "month-day-cell";
+    cell.textContent = dayNum;
+
+    if (date > today) {
+
+      cell.classList.add("is-future");
+
+    } else {
+
+      const match = stats.perDay.find(entry => entry.dateKey === getDateKey(date));
+      const rate = match ? match.rate : 0;
+
+      cell.style.backgroundColor = "var(--accent, #22c55e)";
+      cell.style.opacity = String(Math.max(0.12, rate));
+    }
+
+    container.appendChild(cell);
+  }
+}
+
+function renderMonthlyHabitBreakdown(stats) {
+
+  const container = monthCard.querySelector(".month-habit-list");
+  container.innerHTML = "";
+
+  if (!stats.hasAnyHabits) {
+    container.innerHTML = `<div class="month-empty-note">No habits to show.</div>`;
+    return;
+  }
+
+  if (!stats.hasElapsedDays) {
+    container.innerHTML = `<div class="month-empty-note">This month hasn't started yet.</div>`;
+    return;
+  }
+
+  stats.perHabit.forEach(entry => {
+
+    const row = document.createElement("div");
+    row.className = "month-habit-row";
+
+    const name = document.createElement("span");
+    name.textContent = entry.name;
+
+    const rate = document.createElement("span");
+    rate.textContent = `${entry.rate}% (${entry.completed}/${entry.possible})`;
+
+    row.append(name, rate);
+    container.appendChild(row);
+  });
+}
+
+/* =========================================================
    RENDER
 ========================================================= */
 
@@ -1417,6 +1834,10 @@ function render() {
   if (detailsHabitId) {
     renderHabitDetails();
   }
+
+  if (monthOpen) {
+    renderMonthlyView();
+  }
 }
 
 /* =========================================================
@@ -1428,4 +1849,3 @@ if (document.readyState === "loading") {
 } else {
   initRitmo();
 }
-   
